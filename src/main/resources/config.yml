@@ -1,0 +1,57 @@
+#Selection Tool
+FavFarm:
+Tool:
+#The Item Used For Catching Animals For Farms
+Catcher:
+  Material: "SNOW_BALL"
+  DisplayName: '&3Animal Catcher'
+#Amount Of Catchers A Player Starts With
+  Amount: 5
+#The Selection For Favoutire Farms Creation
+Selector:
+  Material: "BLAZE_ROD"
+  DisplayName: '&6Farm Selector'
+Delays:
+#How Long Until A Player Can Create Another Farm In Minutes
+FarmCreation: 60
+#How Long Until A Player Can Recieve More Catchers In Minutes
+Cooldown: 3600
+#Blocks A Player Starts With and Increases By Per Level
+Blocks:
+#Amount Of Blocks A Player Starts With
+Amount: 150
+#Increment Amount Per Level
+Increment: 10
+#Catch Rate For Animals
+CatchRate:
+  Chicken: 78.6
+  Cow: 64.6
+  Horse: 31.4
+  Ocelot: 28.3
+  Pig: 82.9
+  PolarBear: 20.9
+  Rabbit: 18.4
+  Sheep: 72.9
+  Wolf: 36.6
+#Experience Gained For Capturing
+Experience:
+  Most:
+    Chicken: 18
+    Cow: 19
+    Pig: 17
+    Sheep: 17
+    Wolf: 25
+    Horse: 29
+    Ocelot: 31
+    PolarBear: 45
+    Rabbit: 49
+  Least:
+    Chicken: 2
+    Cow: 3
+    Pig: 1
+    Sheep: 4
+    Wolf: 6
+    Horse: 8
+    Ocelot: 11
+    PolarBear: 14
+    Rabbit: 17

@@ -1,0 +1,48 @@
+name: FavouriteFarms
+version: 1.0.0
+description: Extensively Created Farming Plugin For Minecraft Servers
+softdepend: [WorldGuard, WorldEdit, GriefPrevention]
+ 
+author: Azewilous
+website: http://azewilous.github.io
+ 
+main: io.github.favfarms.FavFarms
+database: false
+
+commands:
+  farm:
+    description: Favourite Farms Base Command
+    usage: /farm
+
+permissions:
+  favfarms.*:
+    description: Gives Access To All Permissions For Favourite Farms
+  favfarms.farm:
+    description: Displays Plugin Help
+    default: true
+  favfarms.reload:
+    description: Access To Reload Command
+  favfarms.tool:
+    description: Access To Farm Creation Tool
+  favfarms.show:
+    description: Access To Highlight Farm Area For Player
+  favfarms.create:
+    description: Access To Create A Farm
+  favfarms.remove:
+    description: Access To Remove A Farm
+  favfarms.info.self:
+    description: Access To Get Farm Info For Self
+  favfarms.info.other:
+    description: Access To Get Farm Info For Others
+  favfarms.obtain.catcher:
+    description: Access To Obtain Catch Tool
+  favfarms.set.spawn:
+    description: Access To Set Farm Spawn
+  favfarms.inv.self:
+    description: Open Farm Inventory For Self
+  favfarms.inv.other:
+    description: Open Farm Invneotry Of Others
+  favfarms.farm.animals:
+    description: Access To See Animals A Player Owns
+  favfarms.bypass.area:
+    description: Access To Create Farm On Top of Claims/Regions
