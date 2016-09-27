@@ -1,9 +1,7 @@
 package io.github.favfarms.farm;
 
 import io.github.favfarms.configuration.FarmConfig;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.UUID;
@@ -33,49 +31,39 @@ class Farm {
     int ID;
     int blocks;
     UUID ownerUUID;
-    int level;
     Location locFirst;
-    Vector blockVecFirst;
-    Vector blockVecSecond;
-    int experience;
+    Vector vecFirst;
+    Vector vecSecond;
 
-    public void createFarm(String name, UUID uuid, int ID, int blocks, int level, int experience) {
+    public void createFarm(String name, UUID uuid, int ID, int blocks) {
         this.name = name;
         this.ID = ID;
         ownerUUID = uuid;
-        this.level = level;
         this.blocks = blocks;
-        this.experience = experience;
 
         int amount = config.getFarms().getInt("Amount");
         config.getFarms().set("Amount", amount + 1);
-        config.getFarms().set("Farms." + ownerUUID + ".Name", getName());
-        config.getFarms().set("Farms." + ownerUUID + ".ID", getID());
-        config.getFarms().set("Farms." + ownerUUID + ".Creator", getCreatorName());
-        config.getFarms().set("Farms." + ownerUUID + ".Size", getFarmSize());
-        config.getFarms().set("Farms." + ownerUUID + ".Level", getLevel());
-        config.getFarms().set("Farms." + ownerUUID + ".Experience", getExperience());
+        config.getFarms().set("Farms." + getName() + ".Name", getName());
+        config.getFarms().set("Farms." + getName() + ".ID", getID());
+        config.getFarms().set("Farms." + getName() + ".Creator", getOwnerUUID().toString());
+        config.getFarms().set("Farms." + getName() + ".Size", getFarmSize());
         config.saveFarms();
     }
 
     public void createArea(Vector vec1, Vector vec2, Location loc1) {
         locFirst = loc1;
-        blockVecFirst = vec1;
-        blockVecSecond = vec2;
+        vecFirst = vec1;
+        vecSecond = vec2;
 
         if (config.getFarms().get("Farms." + getName()) != null) {
-            if (locFirst != null && blockVecFirst != null && blockVecSecond != null) {
-                config.getFarms().set("Farms." + ownerUUID + ".World", locFirst.getWorld().getName());
-                config.getFarms().set("Farms." + ownerUUID + ".Start_Loc", "(" + blockVecFirst.getBlockX() + ", "
-                        + blockVecFirst.getBlockY() + ", " + blockVecFirst.getBlockZ() + ")");
-                config.getFarms().set("Farms." + ownerUUID + ".End_Loc", "(" + blockVecSecond.getBlockX() + ", "
-                        + blockVecSecond.getBlockY() + ", " + blockVecSecond.getBlockZ() + ")");
-                config.getFarms().set("Farms." + ownerUUID + ".Start.VectorX", blockVecFirst.getBlockX());
-                config.getFarms().set("Farms." + ownerUUID + ".Start.VectorY", blockVecFirst.getBlockY());
-                config.getFarms().set("Farms." + ownerUUID + ".Start.VectorZ", blockVecFirst.getBlockZ());
-                config.getFarms().set("Farms." + ownerUUID + ".End.VectorX", blockVecSecond.getBlockX());
-                config.getFarms().set("Farms." + ownerUUID + ".End.VectorY", blockVecSecond.getBlockY());
-                config.getFarms().set("Farms." + ownerUUID + ".End.VectorZ", blockVecSecond.getBlockZ());
+            if (locFirst != null && vecFirst != null && vecSecond != null) {
+                config.getFarms().set("Farms." + getName() + ".World", locFirst.getWorld().getName());
+                config.getFarms().set("Farms." + getName() + ".Min.X", vecFirst.getBlockX());
+                config.getFarms().set("Farms." + getName() + ".Min.Y", vecFirst.getBlockY());
+                config.getFarms().set("Farms." + getName() + ".Min.Z", vecFirst.getBlockZ());
+                config.getFarms().set("Farms." + getName() + ".Max.X", vecSecond.getBlockX());
+                config.getFarms().set("Farms." + getName() + ".Max.Y", vecSecond.getBlockY());
+                config.getFarms().set("Farms." + getName() + ".Max.Z", vecSecond.getBlockZ());
                 config.saveFarms();
             }
         }
@@ -89,17 +77,8 @@ class Farm {
         return name;
     }
 
-    public String getCreatorName() {
-        Player owner = Bukkit.getPlayer(ownerUUID);
-        return owner.getName();
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public int getExperience() {
-        return experience;
+    public UUID getOwnerUUID() {
+        return ownerUUID;
     }
 
     public String getFarmSize() {

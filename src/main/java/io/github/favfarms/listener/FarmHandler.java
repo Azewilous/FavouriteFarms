@@ -3,6 +3,7 @@ package io.github.favfarms.listener;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.Selection;
 import io.github.favfarms.FavFarms;
+import io.github.favfarms.configuration.FarmConfig;
 import io.github.favfarms.farm.FarmMethods;
 import io.github.favfarms.select.SelectionTool;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
@@ -197,7 +198,13 @@ public class FarmHandler implements Listener {
     public void playerJoinServer(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (method.hasFarm(player.getUniqueId())) {
-            method.loadAnimals(player);
+            if (FarmConfig.getInstance().getAnimals().getString("Animals") != null) {
+                method.loadAnimals(player);
+            }
+            if (FarmConfig.getInstance().getFarms().getString("Farms") != null) {
+                method.loadFarmExp(player);
+                method.loadFarmLevel(player);
+            }
         }
     }
 
@@ -281,6 +288,5 @@ public class FarmHandler implements Listener {
             }
         }
     }
-
 
 }

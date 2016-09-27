@@ -27,6 +27,7 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 
+import static org.bukkit.Bukkit.getPlayer;
 import static org.bukkit.Bukkit.getServer;
 
 /**
@@ -70,7 +71,6 @@ public class FarmMethods {
     List<Block> blocksNew = new ArrayList<>();
     List<Material> materials = new ArrayList<>();
     List<Byte> values = new ArrayList<>();
-    List<UUID> owners = new ArrayList<>();
 
     HashMap<UUID, Integer> level = new HashMap<>();
     HashMap<UUID, Integer> experience = new HashMap<>();
@@ -82,47 +82,42 @@ public class FarmMethods {
     //End Of
 
     public void createFarmData(Player player, String farmName) {
-        if (getFarmsOwned(player.getUniqueId()) < 1) {
-            if (delayed.get(player.getUniqueId()).contains(false)) {
-                if (!farmExist(farmName)) {
-                    setID();
-                    owners.add(player.getUniqueId());
-                    saveOwners();
-                    farm.createFarm(farmName, player.getUniqueId(), ID, blocks, getLevel(player), getExp(player));
-                    createFarmArea(player, blkLoc1.get(player));
-                    createPlayerData(player, farmName);
-                    delayed.put(player.getUniqueId(), true);
-                    applyCooldown(player, 10L);
-                    player.sendMessage(ChatColor.GREEN + "Created Farm " + farmName + " with bounds min("
-                            + max.get(player) + ") - max (" + min.get(player) + ")");
-                } else {
-                    player.sendMessage(ChatColor.DARK_AQUA + "This Farm Name Is Taken");
-                }
+        delayed.put(player.getUniqueId(), false);
+        if (delayed.get(player.getUniqueId()).contains(false)) {
+            if (!farmExist(farmName)) {
+                setID();
+                farm.createFarm(farmName, player.getUniqueId(), ID, blocks);
+                createFarmArea(player, blkLoc1.get(player));
+                createPlayerData(player, farmName, getLevel(player), getExp(player));
+                delayed.put(player.getUniqueId(), true);
+                applyCooldown(player, 10L);
+                player.sendMessage(ChatColor.GREEN + "Created Farm " + farmName + " with bounds min("
+                        + max.get(player) + ") - max (" + min.get(player) + ")");
+            } else {
+                player.sendMessage(ChatColor.DARK_AQUA + "This Farm Name Is Taken");
             }
-        } else {
-            player.sendMessage(ChatColor.DARK_AQUA + "Currently Max Number Of Farms Per Player Is 1,"
-                    + " In Future Updates More Will Be Available");
         }
     }
 
-    HashMap<UUID, String> farms = new HashMap<>();
 
-    public void createPlayerData(Player player, String farmName) {
-        farms.put(player.getUniqueId(), farmName);
-        UUID uuid = player.getUniqueId();
-        config.getPlayerData().set("PlayerData." + uuid + ".PlayerName", player.getName());
-        config.getPlayerData().set("PlayerData." + uuid + ".FarmName", farms.get(player.getUniqueId()));
-        config.getPlayerData().set("PlayerData." + uuid + ".FarmsOwned", getFarmsOwned(player.getUniqueId()));
+
+    public void createPlayerData(Player player, String name, Integer level, Integer exp) {
+        config.getPlayerData().set("PlayerData." + name + ".OwnerUUID", player.getUniqueId().toString());
+        config.getPlayerData().set("PlayerData." + name + ".FarmsOwned", getFarmsOwned(player.getUniqueId()));
+        config.getPlayerData().set("PlayerData." + name + ".Level", level);
+        config.getPlayerData().set("PlayerData." + name + ".Experience", exp);
         config.savePlayerData();
     }
 
     public Integer getFarmsOwned(UUID id) {
+        Player player = getPlayer(id);
+        String name = getFarmForPlayer(player);
         if (config.getPlayerData().get("PlayerData") != null) {
-            if (config.getPlayerData().get("PlayerData." + id + ".FarmsOwned") != null) {
-                return config.getPlayerData().getInt("PlayerData." + id + ".FarmsOwned");
+            if (config.getPlayerData().get("PlayerData." + name + ".FarmsOwned") != null) {
+                return config.getPlayerData().getInt("PlayerData." + name + ".FarmsOwned");
             } else {
-                config.getPlayerData().set("PlayerData." + id + ".FarmsOwned", 1);
-                return config.getPlayerData().getInt("PlayerData." + id + ".FarmsOwned");
+                config.getPlayerData().set("PlayerData." + name + ".FarmsOwned", 1);
+                return config.getPlayerData().getInt("PlayerData." + name + ".FarmsOwned");
             }
         }
         return null;
@@ -212,17 +207,12 @@ public class FarmMethods {
         }
     }
     */
+
     @SuppressWarnings("deprecation")
     public void showFarmSelection(Player player) {
         if (min == null && max == null) {
-            int x1 = config.getFarms().getInt("Farms." + player.getUniqueId() + "Start.VectorX");
-            int y1 = config.getFarms().getInt("Farms." + player.getUniqueId() + "Start.VectorY");
-            int z1 = config.getFarms().getInt("Farms." + player.getUniqueId() + "Start.VectorZ");
-            int x2 = config.getFarms().getInt("Farms." + player.getUniqueId() + "End.VectorX");
-            int y2 = config.getFarms().getInt("Farms." + player.getUniqueId() + "End.VectorY");
-            int z2 = config.getFarms().getInt("Farms." + player.getUniqueId() + "End.VectorZ");
-            Vector vec1 = new Vector(x1, y1, z1);
-            Vector vec2 = new Vector(x2, y2, z2);
+            Vector vec1 = getMinimum(player.getLocation());
+            Vector vec2 = getMaximum(player.getLocation());
             min.put(player, Vector.getMinimum(vec1, vec2));
             max.put(player, Vector.getMaximum(vec1, vec2));
         }
@@ -387,26 +377,23 @@ public class FarmMethods {
         int locY = location.getBlockY();
         int locZ = location.getBlockZ();
 
-        int x = 0;
-        int y = 0;
-        int z = 0;
+        int x = min.get(player).getBlockX();
+        int y = min.get(player).getBlockY();
+        int z = min.get(player).getBlockZ();
 
-        int x1 = 0;
-        int y1 = 0;
-        int z1 = 0;
+        int x1 = max.get(player).getBlockX();
+        int y1 = max.get(player).getBlockY();
+        int z1 = max.get(player).getBlockZ();
 
         if (min.get(player) == null || max.get(player) == null) {
             if (config.getFarms().getInt("Amount") != 0) {
-                for (String keys : config.getFarms().getConfigurationSection("Farms").getKeys(false)) {
-                    UUID ownerUUID = UUID.fromString(keys);
-                    x = config.getFarms().getInt("Farms." + ownerUUID + ".Start.VectorX");
-                    y = config.getFarms().getInt("Farms." + ownerUUID + ".Start.VectorY");
-                    z = config.getFarms().getInt("Farms." + ownerUUID + ".Start.VectorZ");
+                x = getMinimum(player.getLocation()).getBlockX();
+                y = getMinimum(player.getLocation()).getBlockY();
+                z = getMinimum(player.getLocation()).getBlockZ();
 
-                    x1 = config.getFarms().getInt("Farms." + ownerUUID + ".End.VectorX");
-                    y1 = config.getFarms().getInt("Farms." + ownerUUID + ".End.VectorY");
-                    z1 = config.getFarms().getInt("Farms." + ownerUUID + ".End.VectorZ");
-                }
+                x1 = getMaximum(player.getLocation()).getBlockX();
+                y1 = getMaximum(player.getLocation()).getBlockY();
+                z1 = getMaximum(player.getLocation()).getBlockZ();
             } else {
                 return false;
             }
@@ -455,32 +442,21 @@ public class FarmMethods {
     }
 
     public boolean checkPlayerInFarm(Player player) {
-        double pX = player.getLocation().getX();
-        double pY = player.getLocation().getY();
-        double pZ = player.getLocation().getZ();
+        double locX = player.getLocation().getX();
+        double locY = player.getLocation().getY();
+        double locZ = player.getLocation().getZ();
 
-        int x = 0;
-        int y = 0;
-        int z = 0;
+        int x = getMinimum(player.getLocation()).getBlockX();
+        int y = getMinimum(player.getLocation()).getBlockY();
+        int z = getMinimum(player.getLocation()).getBlockZ();
 
-        int x1 = 0;
-        int y1 = 0;
-        int z1 = 0;
+        int x1 = getMaximum(player.getLocation()).getBlockX();
+        int y1 = getMaximum(player.getLocation()).getBlockY();
+        int z1 = getMaximum(player.getLocation()).getBlockZ();
 
-        for (String keys : config.getFarms().getConfigurationSection("Farms").getKeys(false)) {
-            UUID ownerUUID = UUID.fromString(keys);
-            x = config.getFarms().getInt("Farms." + ownerUUID + ".Start.VectorX");
-            y = config.getFarms().getInt("Farms." + ownerUUID + ".Start.VectorY");
-            z = config.getFarms().getInt("Farms." + ownerUUID + ".Start.VectorZ");
-
-            x1 = config.getFarms().getInt("Farms." + ownerUUID + ".End.VectorX");
-            y1 = config.getFarms().getInt("Farms." + ownerUUID + ".End.VectorY");
-            z1 = config.getFarms().getInt("Farms." + ownerUUID + ".End.VectorZ");
-        }
-
-        if ((pX >= x && pX <= x1) || (pX <= x && pX >= x1)) {
-            if ((pZ >= z && pZ <= z1) || (pZ <= z && pZ >= z1)) {
-                if ((pY >= y && pY <= y1) || (pY <= y && pY >= y1)) {
+        if ((locX >= x && locX <= x1) || (locX <= x && locX >= x1)) {
+            if ((locZ >= z && locZ <= z1) || (locZ <= z && locZ >= z1)) {
+                if ((locY >= y && locY <= y1) || (locY <= y && locY >= y1)) {
                     return true;
                 }
             }
@@ -495,24 +471,13 @@ public class FarmMethods {
             double pY = animal.getLocation().getY();
             double pZ = animal.getLocation().getZ();
 
-            int x = 0;
-            int y = 0;
-            int z = 0;
+            int x = getMinimum(animal.getLocation()).getBlockX();
+            int y = getMinimum(animal.getLocation()).getBlockY();
+            int z = getMinimum(animal.getLocation()).getBlockZ();
 
-            int x1 = 0;
-            int y1 = 0;
-            int z1 = 0;
-
-            for (String keys : config.getFarms().getConfigurationSection("Farms").getKeys(false)) {
-                UUID ownerUUID = UUID.fromString(keys);
-                x = config.getFarms().getInt("Farms." + ownerUUID + ".Start.VectorX");
-                y = config.getFarms().getInt("Farms." + ownerUUID + ".Start.VectorY");
-                z = config.getFarms().getInt("Farms." + ownerUUID + ".Start.VectorZ");
-
-                x1 = config.getFarms().getInt("Farms." + ownerUUID + ".End.VectorX");
-                y1 = config.getFarms().getInt("Farms." + ownerUUID + ".End.VectorY");
-                z1 = config.getFarms().getInt("Farms." + ownerUUID + ".End.VectorZ");
-            }
+            int x1 = getMaximum(animal.getLocation()).getBlockX();
+            int y1 = getMaximum(animal.getLocation()).getBlockY();
+            int z1 = getMaximum(animal.getLocation()).getBlockZ();
 
             if ((pX >= x && pX <= x1) || (pX <= x && pX >= x1)) {
                 if ((pZ >= z && pZ <= z1) || (pZ <= z && pZ >= z1)) {
@@ -536,15 +501,15 @@ public class FarmMethods {
     public void setFarmSpawn (Player player) {
         if (hasFarm(player.getUniqueId())) {
             if (checkPlayerInFarm(player)) {
-                UUID ownerUUID = player.getUniqueId();
                 World world = player.getWorld();
+                String name = getFarmForPlayer(player);
                 double x = player.getLocation().getX();
                 double y = player.getLocation().getY() + 2;
                 double z = player.getLocation().getZ();
-                config.getFarms().set("Farms." + ownerUUID + ".World", world.getName());
-                config.getFarms().set("Farms." + ownerUUID + ".Spawn.X", x);
-                config.getFarms().set("Farms." + ownerUUID + ".Spawn.Y", y);
-                config.getFarms().set("Farms." + ownerUUID + ".Spawn.Z", z);
+                config.getFarms().set("Farms." + name + ".World", world.getName());
+                config.getFarms().set("Farms." + name + ".Spawn.X", x);
+                config.getFarms().set("Farms." + name + ".Spawn.Y", y);
+                config.getFarms().set("Farms." + name + ".Spawn.Z", z);
                 config.saveFarms();
                 player.sendMessage(ChatColor.DARK_AQUA + "Farm Spawn Set At (X:" + x + ", Y: " + y + ", Z: " + z);
             } else {
@@ -557,13 +522,15 @@ public class FarmMethods {
 
     public Location getFarmSpawn (Player player) {
         if (hasFarm(player.getUniqueId())) {
-            UUID ownerUUID = player.getUniqueId();
-            World world = FavFarms.getInstance().getServer().getWorld(config.getFarms().getString("Farms." + ownerUUID
-                    + ".World"));
-            double x = config.getFarms().getDouble("Farms." + ownerUUID + ".Spawn.X");
-            double y = config.getFarms().getDouble("Farms." + ownerUUID + ".Spawn.Y");
-            double z = config.getFarms().getDouble("Farms." + ownerUUID + ".Spawn.Z");
-            return new Location(world, x, y, z);
+            String name = getFarmForPlayer(player);
+            if (config.getFarms().get("Farms." + name + ".Spawn.X") != null) {
+                World world = FavFarms.getInstance().getServer().getWorld(config.getFarms().getString("Farms." + name
+                        + ".World"));
+                double x = config.getFarms().getDouble("Farms." + name + ".Spawn.X");
+                double y = config.getFarms().getDouble("Farms." + name + ".Spawn.Y");
+                double z = config.getFarms().getDouble("Farms." + name + ".Spawn.Z");
+                return new Location(world, x, y, z);
+            }
         }
         return null;
     }
@@ -574,16 +541,13 @@ public class FarmMethods {
 
     public void removeFarm(Player player) {
         if (hasFarm(player.getUniqueId())) {
-            if (config.getFarms().getString("Farms." + player.getUniqueId()) != null) {
-                config.getFarms().set("Farms." + player.getUniqueId(), null);
+            String name = getFarmForPlayer(player);
+            if (config.getFarms().getString("Farms." + name) != null) {
+                config.getFarms().set("Farms." + name, null);
                 int amount = config.getFarms().getInt("Amount");
                 amount--;
                 config.getFarms().set("Amount", amount);
                 config.getPlayerData().set("PlayerData." + player.getUniqueId() + ".FarmsOwned", amount);
-                if (getFarmsOwned(player.getUniqueId()) == 0) {
-                    owners.remove(player.getUniqueId());
-                    config.getFarms().set("Owners." + owners, null);
-                }
             }
         }
     }
@@ -617,7 +581,8 @@ public class FarmMethods {
                                 Ocelot ocelot = (Ocelot) animal;
                                 ocelot.setSitting(true);
                             }
-                            animal.teleport(getFarmSpawn(player));
+                            String name = getFarmForPlayer(player);
+                            animal.teleport(getRandomLocWithinFarm(name));
                             animalsMap.put(player.getUniqueId(), animalUUID);
                             giveExp(player, animal);
                             player.sendMessage(ChatColor.DARK_AQUA + animal.getName() + " Has Been Added To Farm");
@@ -725,20 +690,23 @@ public class FarmMethods {
     }
 
     public boolean hasFarm(UUID uuid) {
-        return config.getFarms().get("Farms." + uuid) != null;
+        String name = getFarmForPlayer(getPlayer(uuid));
+        return config.getFarms().get("Farms." + name) != null;
     }
 
     public void getFarmInfo(Player player, UUID uuid) {
         String info;
+        String name = getFarmForPlayer(getPlayer(uuid));
         if (hasFarm(uuid)) {
-            String owner = ChatColor.BLUE + "Owner UUID: " + config.getFarms().get("Farms." + uuid).toString();
-            String creator = ChatColor.BLUE + "Owner Name: " + config.getFarms()
-                    .get("Farms." + uuid + ".Creator");
-            String name = ChatColor.BLUE + "Farm Name: " + config.getFarms().get("Farms." + uuid + ".Name");
-            String id = ChatColor.BLUE + "Farm ID: " + config.getFarms().get("Farms." + uuid + ".ID");
-            String size = ChatColor.BLUE + "Farm Size: " + config.getFarms().get("Farms." + uuid + ".Size");
+            String owner = ChatColor.BLUE + "Farm Name: " + config.getFarms().get("Farms." + name);
+            String creator = ChatColor.BLUE + "Owner UUID: " + config.getFarms()
+                    .get("Farms." + name + ".Creator").toString();
+            String id = ChatColor.BLUE + "Farm ID: " + config.getFarms().get("Farms." + name + ".ID");
+            String size = ChatColor.BLUE + "Farm Size: " + config.getFarms().get("Farms." + name + ".Size");
+            String min = ChatColor.BLUE + "Farm Min: " + config.getFarms().get("Farms." + name + ".Min");
+            String max = ChatColor.BLUE + "Farm Max: " + config.getFarms().get("Farms." + name + ".Max");
 
-            info = owner + "\n" + creator + "\n" + name + "\n" + id + "\n" + size;
+            info = owner + "\n" + creator + "\n" + name + "\n" + id + "\n" + size + "\n" + min + "\n" + max;
         } else {
             info = ChatColor.DARK_AQUA + "This Player Does Not Have A Farm";
         }
@@ -747,16 +715,17 @@ public class FarmMethods {
 
     public void getFarmInfo(Player player) {
         String info;
-        UUID uuid = player.getUniqueId();
-        if (hasFarm(uuid)) {
-            String owner = ChatColor.BLUE + "Owner UUID: " + config.getFarms().get("Farms." + uuid).toString();
-            String creator = ChatColor.BLUE + "Owner Name: " + config.getFarms()
-                    .get("Farms." + uuid + ".Creator");
-            String name = ChatColor.BLUE + "Farm Name: " + config.getFarms().get("Farms." + uuid + ".Name");
-            String id = ChatColor.BLUE + "Farm ID: " + config.getFarms().get("Farms." + uuid + ".ID");
-            String size = ChatColor.BLUE + "Farm Size: " + config.getFarms().get("Farms." + uuid + ".Size");
+        String name = getFarmForPlayer(player);
+        if (hasFarm(player.getUniqueId())) {
+            String owner = ChatColor.BLUE + "Farm Name: " + config.getFarms().get("Farms." + name);
+            String creator = ChatColor.BLUE + "Owner UUID: " + config.getFarms()
+                    .get("Farms." + name + ".Creator").toString();
+            String id = ChatColor.BLUE + "Farm ID: " + config.getFarms().get("Farms." + name + ".ID");
+            String size = ChatColor.BLUE + "Farm Size: " + config.getFarms().get("Farms." + name + ".Size");
+            String min = ChatColor.BLUE + "Farm Min: " + config.getFarms().get("Farms." + name + ".Min");
+            String max = ChatColor.BLUE + "Farm Max: " + config.getFarms().get("Farms." + name + ".Max");
 
-            info = owner + "\n" + creator + "\n" + name + "\n" + id + "\n" + size;
+            info = owner + "\n" + creator + "\n" + name + "\n" + id + "\n" + size + "\n" + min + "\n" + max;
         } else {
             info = ChatColor.DARK_AQUA + "This Player Does Not Have A Farm";
         }
@@ -764,7 +733,8 @@ public class FarmMethods {
     }
 
     public String getFarmSize(UUID uuid) {
-        String str = config.getFarms().getString("Farms." + uuid + ".Size");
+        String name = getFarmForPlayer(getPlayer(uuid));
+        String str = config.getFarms().getString("Farms." + name + ".Size");
         return str.substring(0, str.indexOf(","));
     }
 
@@ -800,6 +770,24 @@ public class FarmMethods {
             }
         }
         return false;
+    }
+
+    public Location getRandomLocWithinFarm(String farm) {
+        World world = Bukkit.getWorld(config.getFarms().getString("Farms." + farm + ".World"));
+        int x = config.getFarms().getInt("Farms." + farm + ".Min.X");
+        UUID uuid = UUID.fromString(config.getFarms().getString("Farms." + farm + ".Creator"));
+        int y = getFarmSpawn(getPlayer(uuid)).getBlockY();
+        int z = config.getFarms().getInt("Farms." + farm + ".Min.Z");
+
+        int x1 = config.getFarms().getInt("Farms." + farm + ".Max.X");
+        int z1 = config.getFarms().getInt("Farms." + farm + ".Max.Z");
+
+        Random r = new Random();
+        int result1 = r.nextInt(x1 - x) + x;
+        int result2 = r.nextInt(z1 - z) + z;
+
+        return new Location(world, result1, y, result2);
+
     }
 
     public void giveCatcher(Player player) {
@@ -1256,7 +1244,6 @@ public class FarmMethods {
     }
 
     public void loadAnimals(Player player) {
-        animalsMap = ArrayListMultimap.create();
         if (config.getAnimals().get("Animals." + player.getUniqueId()) != null) {
             List<String> strList = config.getAnimals().getStringList("Animals." + player.getUniqueId() + ".Ids");
             for (String animalIds : strList) {
@@ -1268,56 +1255,111 @@ public class FarmMethods {
     }
 
     public void saveFarmLevel(Player player) {
-        if (config.getAnimals().get("Farms") != null) {
-            UUID playerUUID = UUID.fromString(config.getAnimals().getString("Farms."));
-            config.getFarms().set("Farms." + playerUUID + ".Level", getLevel(player));
+        if (config.getPlayerData().get("PlayerData") != null) {
+            String name = getFarmForPlayer(player);
+            config.getPlayerData().set("PlayerData." + name + ".Level", getLevel(player));
             config.saveFarms();
         }
     }
 
-    public void loadFarmLevel() {
-        if (config.getAnimals().get("Farms") != null) {
-            UUID playerUUID = UUID.fromString(config.getAnimals().getString("Farms."));
-            int tempLevel = config.getFarms().getInt("Farms." + playerUUID + ".Level");
+    public void loadFarmLevel(Player player) {
+        if (config.getPlayerData().get("PlayerData") != null) {
+            String name = getFarmForPlayer(player);
+            UUID playerUUID = UUID.fromString(config.getPlayerData().getString("PlayerData." + name + ".OwnerUUID"));
+            int tempLevel = config.getPlayerData().getInt("PlayerData." + name + ".Level");
             level.put(playerUUID, tempLevel);
         }
     }
 
     public void saveFarmExp(Player player) {
-        if (config.getAnimals().get("Farms") != null) {
-            UUID playerUUID = UUID.fromString(config.getAnimals().getString("Farms."));
-            config.getFarms().set("Farms." + playerUUID + ".Experience", getExp(player));
+        if (config.getPlayerData().get("PlayerData") != null) {
+            String name = getFarmForPlayer(player);
+            config.getPlayerData().set("PlayerData." + name + ".Experience", getExp(player));
             config.saveFarms();
         }
     }
 
-    public void loadFarmExp() {
-        if (config.getAnimals().get("Farms") != null) {
-            UUID playerUUID = UUID.fromString(config.getAnimals().getString("Farms."));
-            int tempExp = config.getFarms().getInt("Farms." + playerUUID + ".Experience");
+    public void loadFarmExp(Player player) {
+        if (config.getPlayerData().get("PlayerData") != null) {
+            String name = getFarmForPlayer(player);
+            int tempExp = config.getPlayerData().getInt("PlayerData." + name + ".Experience");
+            UUID playerUUID = UUID.fromString(config.getPlayerData().getString("PlayerData." + name + ".OwnerUUID"));
             experience.put(playerUUID, tempExp);
         }
     }
 
-    public void saveOwners() {
-        if (config.getFarms().get("Owners") == null) {
-            config.getFarms().createSection("Owners");
-            config.getFarms().set("Owners", owners.toString());
-            config.saveFarms();
+    public String getFarmForPlayer(Player player) {
+        String name = "";
+
+        if (config.getFarms().getConfigurationSection("Farms") != null) {
+            for (String key : config.getFarms().getConfigurationSection("Farms").getKeys(false)) {
+                if (config.getFarms().getString("Farms." + key + ".Creator").equalsIgnoreCase(player.getUniqueId().toString())) {
+                    name = key;
+                }
+            }
         } else {
-            config.getFarms().set("Owners", owners.toString());
-            config.saveFarms();
+            return null;
         }
+        return name;
     }
 
-    public void loadOwners() {
-        if (config.getFarms().get("Owners") != null) {
-            if (owners == null) {
-                for (String id : config.getFarms().getStringList("Owners")) {
-                    owners.add(UUID.fromString(id));
+    public Vector getMinimum(Location loc) {
+        Vector minVec;
+
+        String key = getFarmFromLocation(loc);
+        int x = config.getFarms().getInt("Farms." + key + ".Min.X");
+        int y = config.getFarms().getInt("Farms." + key + ".Min.Y");
+        int z = config.getFarms().getInt("Farms." + key + ".Min.Z");
+
+        minVec = new Vector(x, y, z);
+
+        return minVec;
+    }
+
+    public Vector getMaximum(Location loc) {
+        Vector maxVec;
+
+        String key = getFarmFromLocation(loc);
+        int x = config.getFarms().getInt("Farms." + key + ".Max.X");
+        int y = config.getFarms().getInt("Farms." + key + ".Max.Y");
+        int z = config.getFarms().getInt("Farms." + key + ".Max.Z");
+
+        maxVec = new Vector(x, y, z);
+
+        return maxVec;
+    }
+
+    public String getFarmFromLocation(Location location) {
+        String name = "";
+
+        int locX = location.getBlockX();
+        int locY = location.getBlockY();
+        int locZ = location.getBlockZ();
+
+        for (String key : config.getFarms().getConfigurationSection("Farms").getKeys(false)) {
+            int x = config.getFarms().getInt("Farms." + key + ".Min.X");
+            int y = config.getFarms().getInt("Farms." + key + ".Min.Y");
+            int z = config.getFarms().getInt("Farms." + key + ".Min.Z");
+
+            int x1 = config.getFarms().getInt("Farms." + key + ".Max.X");
+            int y1 = config.getFarms().getInt("Farms." + key + ".Max.Y");
+            int z1 = config.getFarms().getInt("Farms." + key + ".Max.Z");
+
+            Vector minVec = new Vector(x, y, z);
+            Vector maxVec = new Vector(x1, y1, z1);
+
+            if (locX >= minVec.getBlockX() && locX <= maxVec.getBlockX() || locX <= minVec.getBlockX()
+                    && locX >= maxVec.getBlockX()) {
+                if (locZ >= minVec.getBlockZ() && locZ <= maxVec.getBlockZ() || locZ <= minVec.getBlockZ()
+                        && locZ >= maxVec.getBlockZ()) {
+                    if (locY >= minVec.getBlockY() && locY <= maxVec.getBlockY() || locY <= minVec.getBlockY()
+                            && locY >= maxVec.getBlockY()) {
+                        name = key;
+                    }
                 }
             }
         }
+        return name;
     }
 
     @SuppressWarnings("deprecation")
@@ -1387,11 +1429,9 @@ public class FarmMethods {
     }
 
     public boolean farmExist(String name) {
-        if (config.getFarms() != null) {
-            for (UUID id : owners) {
-                if (!config.getFarms().getString("Farms." + id + ".Name").equalsIgnoreCase(name)) {
-                    return true;
-                }
+        if (config.getFarms().get("Farms.") != null) {
+            if (!config.getFarms().getString("Farms.").equalsIgnoreCase(name)) {
+                return true;
             }
         }
         return false;

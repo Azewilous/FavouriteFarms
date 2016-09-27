@@ -52,6 +52,8 @@ public class FarmExecutor implements CommandExecutor {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
                                         + FarmPermissions.COMMAND_RELOAD.toString());
                             }
+                        } else if (args[0].equalsIgnoreCase("update")) {
+                            FavFarms.update();
                         } else if (args[0].equalsIgnoreCase("tool")) {
                             if (player.hasPermission(FarmPermissions.COMMAND_TOOL.toString()) || player.isOp()) {
                                 player.getInventory().addItem(tool.getTool());
