@@ -59,7 +59,6 @@ public class FarmMethods {
     public HashMap<Player, Vector> vector1 = new HashMap<>();
     public HashMap<Player, Vector> vector2 = new HashMap<>();
 
-    public boolean isShowing = false;
     boolean caught = false;
     public boolean obtainable = false;
 
@@ -67,39 +66,34 @@ public class FarmMethods {
 
     public List<Player> capture = new ArrayList<>();
 
-    List<Block> blocksOrigs = new ArrayList<>();
-    List<Block> blocksNew = new ArrayList<>();
-    List<Material> materials = new ArrayList<>();
-    List<Byte> values = new ArrayList<>();
-
     HashMap<UUID, Integer> level = new HashMap<>();
     HashMap<UUID, Integer> experience = new HashMap<>();
     //CoolDowns
+    HashMap<UUID, Long> recentCreate = new HashMap<>();
+    HashMap<UUID, Long> highlighting = new HashMap<>();
 
     //Farm Animal Data
     Multimap<UUID, UUID> animalsMap = ArrayListMultimap.create();
-    Multimap<UUID, Boolean> delayed = ArrayListMultimap.create();
     //End Of
 
     public void createFarmData(Player player, String farmName) {
-        delayed.put(player.getUniqueId(), false);
-        if (delayed.get(player.getUniqueId()).contains(false)) {
-            if (!farmExist(farmName)) {
-                setID();
-                farm.createFarm(farmName, player.getUniqueId(), ID, blocks);
-                createFarmArea(player, blkLoc1.get(player));
-                createPlayerData(player, farmName, getLevel(player), getExp(player));
-                delayed.put(player.getUniqueId(), true);
-                applyCooldown(player, 10L);
-                player.sendMessage(ChatColor.GREEN + "Created Farm " + farmName + " with bounds min("
-                        + max.get(player) + ") - max (" + min.get(player) + ")");
-            } else {
-                player.sendMessage(ChatColor.DARK_AQUA + "This Farm Name Is Taken");
+        if (recentCreate.containsKey(player.getUniqueId())) {
+            if (recentCreate.get(player.getUniqueId()) == 0L) {
+                if (!farmExist(farmName)) {
+                    setID();
+                    farm.createFarm(farmName, player.getUniqueId(), ID, blocks);
+                    createFarmArea(player, blkLoc1.get(player));
+                    createPlayerData(player, farmName, getLevel(player), getExp(player));
+                    recentCreate.put(player.getUniqueId(), 10L);
+                    applyCooldown(player);
+                    player.sendMessage(ChatColor.GREEN + "Created Farm " + farmName + " with bounds min("
+                            + max.get(player) + ") - max (" + min.get(player) + ")");
+                } else {
+                    player.sendMessage(ChatColor.DARK_AQUA + "This Farm Name Is Taken");
+                }
             }
         }
     }
-
-
 
     public void createPlayerData(Player player, String name, Integer level, Integer exp) {
         config.getPlayerData().set("PlayerData." + name + ".OwnerUUID", player.getUniqueId().toString());
@@ -134,8 +128,8 @@ public class FarmMethods {
         blkVec2.put(player, blockVec2);
         blkLoc1.put(player, blockVec1.toLocation(player.getWorld()));
         blkLoc2.put(player, blockVec2.toLocation(player.getWorld()));
-        vector1.put(player, new Vector(blockVec1.getX(), blockVec1.getY() - 10, blockVec1.getZ()));
-        vector2.put(player, new Vector(blockVec2.getX(), blockVec2.getY() + 20, blockVec2.getZ()));
+        vector1.put(player, new Vector(blockVec1.getX(), blockVec1.getY() - 15, blockVec1.getZ()));
+        vector2.put(player, new Vector(blockVec2.getX(), blockVec2.getY() + 15, blockVec2.getZ()));
         min.put(player, Vector.getMinimum(vector1.get(player), vector2.get(player)));
         max.put(player, Vector.getMaximum(vector1.get(player), vector2.get(player)));
         for (int x = min.get(player).getBlockX(); x <= max.get(player).getBlockX(); x++) {
@@ -208,78 +202,74 @@ public class FarmMethods {
     }
     */
 
-    @SuppressWarnings("deprecation")
-    public void showFarmSelection(Player player) {
-        if (min == null && max == null) {
-            Vector vec1 = getMinimum(player.getLocation());
-            Vector vec2 = getMaximum(player.getLocation());
-            min.put(player, Vector.getMinimum(vec1, vec2));
-            max.put(player, Vector.getMaximum(vec1, vec2));
-        }
-        World world = player.getWorld();
-        savePreviousBlocks(player);
-        blocksNew.add(world.getBlockAt(min.get(player).getBlockX(), min.get(player).getBlockY()
-                , min.get(player).getBlockZ()));
-        blocksNew.add(world.getBlockAt(max.get(player).getBlockX(), max.get(player).getBlockY()
-                , max.get(player).getBlockZ()));
-        for (Block block : blocksNew) {
-            block.setType(Material.STAINED_GLASS);
-            block.setData(DyeColor.PURPLE.getData());
-            hideFarmSelection(player);
-            isShowing = true;
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    public void hideFarmSelection(final Player player) {
-        final World world = player.getWorld();
+    public void applyCooldown(final Player player) {
         final BukkitScheduler scheduler = FavFarms.getInstance().getServer().getScheduler();
         scheduler.scheduleSyncDelayedTask(FavFarms.getInstance(), () -> {
-            if (isShowing) {
-                for (Block blockOrig : blocksOrigs) {
-                    for (Material material : materials) {
-                        for (Byte value : values) {
-                            world.getBlockAt(blockOrig.getLocation()).setType(material);
-                            world.getBlockAt(blockOrig.getLocation()).setData(value);
-                        }
-                    }
-                }
-                player.sendMessage(ChatColor.DARK_AQUA + "Highlights Have Faded");
-                isShowing = false;
-            }
-        }, 20 * 5);
-    }
-
-    public void applyCooldown(final Player player, Long time) {
-        final BukkitScheduler scheduler = FavFarms.getInstance().getServer().getScheduler();
-        scheduler.scheduleSyncDelayedTask(FavFarms.getInstance(), () -> {
-            for (Boolean bool : delayed.get(player.getUniqueId())) {
-                if (bool) {
-                    player.sendMessage(ChatColor.DARK_AQUA + "This Command Is Still On Cooldown");
-                }
+            long time = recentCreate.get(player.getUniqueId());
+            if (time != 0L) {
+                time -= 1;
+                recentCreate.put(player.getUniqueId(), time);
+                player.sendMessage(ChatColor.DARK_AQUA + "This Command Is Still On Cooldown For");
             }
             player.sendMessage(ChatColor.DARK_AQUA + "You Can Now Create A Farm Again");
-            delayed.put(player.getUniqueId(), false);
-        }, (20 * 60) * time);
+            recentCreate.remove(player.getUniqueId());
+        }, (20 * 60) * recentCreate.get(player.getUniqueId()));
     }
 
-    @SuppressWarnings("deprecation")
-    public void savePreviousBlocks(Player player) {
+    public void highlightCorners(Player player) {
+        min.put(player, getMinimum(player.getLocation()));
+        max.put(player, getMaximum(player.getLocation()));
+
         World world = player.getWorld();
 
-        blocksOrigs.add(world.getBlockAt(min.get(player).getBlockX(), min.get(player).getBlockY()
-                , min.get(player).getBlockZ()));
-        materials.add(world.getBlockAt(min.get(player).getBlockX(), min.get(player).getBlockY()
-                , min.get(player).getBlockZ()).getType());
-        values.add(world.getBlockAt(min.get(player).getBlockX(), min.get(player).getBlockY()
-                , min.get(player).getBlockZ()).getData());
+        int yMin = (max.get(player).getBlockY() + min.get(player).getBlockY()) / 2;
+        int yMax = (max.get(player).getBlockY() + min.get(player).getBlockY()) / 2;
 
-        blocksOrigs.add(world.getBlockAt(max.get(player).getBlockX(), max.get(player).getBlockY()
-                , max.get(player).getBlockZ()));
-        materials.add(world.getBlockAt(max.get(player).getBlockX(), max.get(player).getBlockY()
-                , max.get(player).getBlockZ()).getType());
-        values.add(world.getBlockAt(max.get(player).getBlockX(), max.get(player).getBlockY()
-                , max.get(player).getBlockZ()).getData());
+        Block cornerFirst;
+        Block cornerSecond;
+
+        do {
+            cornerFirst = world.getBlockAt(min.get(player).getBlockX(), yMin
+                    , min.get(player).getBlockZ());
+            yMin++;
+        } while (world.getBlockAt(max.get(player).getBlockX(), yMin - 1
+                , max.get(player).getBlockZ()).getType() != Material.AIR);
+
+        do {
+            cornerSecond = world.getBlockAt(max.get(player).getBlockX(), yMax
+                    , max.get(player).getBlockZ());
+            yMax++;
+        } while (world.getBlockAt(max.get(player).getBlockX(), yMax - 1
+                , max.get(player).getBlockZ()).getType() != Material.AIR);
+
+        highlighting.put(player.getUniqueId(), 10L);
+
+        final HashMap<UUID, Block> blockBot = new HashMap<>();
+        final HashMap<UUID, Block> blockTop = new HashMap<>();
+
+        blockBot.put(player.getUniqueId(), cornerSecond);
+        blockTop.put(player.getUniqueId(), cornerFirst);
+
+        countDownHighlight(player);
+
+        BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
+        scheduler.scheduleSyncRepeatingTask(FavFarms.getInstance(), () -> {
+            if (highlighting.get(player.getUniqueId()) != 0) {
+                world.spawnParticle(Particle.SPELL_WITCH, blockTop.get(player.getUniqueId()).getLocation()
+                        .add(0, 0, 0), 20, 0.0, -10, 0.0, 15);
+                world.spawnParticle(Particle.SPELL_WITCH, blockBot.get(player.getUniqueId()).getLocation()
+                        .add(0, 0, 0), 20, 0.0, -10, 0.0, 15);
+            }
+        }, 0, 1);
+    }
+
+    public void countDownHighlight(Player player) {
+        BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
+        scheduler.scheduleSyncRepeatingTask(FavFarms.getInstance(), () -> {
+            if (highlighting.get(player.getUniqueId()) != 0) {
+                highlighting.put(player.getUniqueId(), highlighting.get(player.getUniqueId()) - 1);
+            }
+        }, 0, 20);
     }
 
     public void reloadFavFarms() {
@@ -291,16 +281,22 @@ public class FarmMethods {
         FavFarms.getInstance().getPluginLoader().enablePlugin(FavFarms.getInstance());
     }
 
-    public boolean isSelection() {
-        return getBlocks() != 0;
+    public boolean isSelection(Player player) {
+        return getBlocks(player) != 0;
     }
 
-    public boolean isValidFarmSize() {
-        return getBlocks() > 15;
+    public boolean isValidFarmSize(Player player) {
+        return getBlocks(player) > 15;
     }
 
-    public Integer getBlocks() {
-        return blocks;
+    public Integer getBlocks(Player player) {
+        if (blocks != 0) {
+            return blocks;
+        }
+        String name = getFarmForPlayer(player);
+        String str = config.getFarms().getString("Farms." + name + ".Size");
+        str = str.replaceAll("[^0-9]+", " ");
+        return Integer.parseInt(str.trim());
     }
 
     List<Location> locations = new ArrayList<>();
@@ -330,8 +326,6 @@ public class FarmMethods {
                                     + ChatColor.DARK_AQUA + " You Are Creating A Farm That Intersects A Claim");
                             return true;
                         }
-                    } else {
-                        player.sendMessage("Claim Null");
                     }
                 }
             }
@@ -349,19 +343,23 @@ public class FarmMethods {
                 RegionManager manager = wg.getRegionManager(world);
                 LocalPlayer lp = (LocalPlayer) player;
                 if (manager != null) {
+                    ProtectedRegion rg = null;
                     Map<String, ProtectedRegion> rgs = WorldGuardPlugin.inst().getRegionManager(loc1.getWorld()).getRegions();
-                    for (ProtectedRegion rg : rgs.values()) {
+                    for (ProtectedRegion reg : rgs.values()) {
                         for (Location loc : locations) {
-                            if (rg.contains(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())) {
-                                if (!rg.isOwner(lp)) {
-                                    player.sendMessage(ChatColor.DARK_AQUA + "You Cannot Create A Farm In This Region");
-                                    return false;
-                                } else {
-                                    player.sendMessage(ChatColor.RED + "[Warning]"
-                                            + ChatColor.DARK_AQUA + " You Are Creating A Farm That Intersects A Region");
-                                    return true;
-                                }
+                            if (reg.contains(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())) {
+                                rg = reg;
                             }
+                        }
+                    }
+                    if (rg != null) {
+                        if (!rg.isOwner(lp)) {
+                            player.sendMessage(ChatColor.DARK_AQUA + "You Cannot Create A Farm In This Region");
+                            return false;
+                        } else {
+                            player.sendMessage(ChatColor.RED + "[Warning]"
+                                    + ChatColor.DARK_AQUA + " You Are Creating A Farm That Intersects A Region");
+                            return true;
                         }
                     }
                 }
@@ -372,21 +370,35 @@ public class FarmMethods {
         return true;
     }
 
-    public boolean intersectsWithFarm(Location location, Player player) {
-        int locX = location.getBlockX();
-        int locY = location.getBlockY();
-        int locZ = location.getBlockZ();
+    public boolean intersectsWithFarm(Location location1, Location location2, Player player) {
+        if (config.getFarms().getInt("Amount") != 0) {
+            int locX1 = location1.getBlockX();
+            int locY1 = location1.getBlockY();
+            int locZ1 = location1.getBlockZ();
 
-        int x = min.get(player).getBlockX();
-        int y = min.get(player).getBlockY();
-        int z = min.get(player).getBlockZ();
+            int locX2 = location2.getBlockX();
+            int locY2 = location2.getBlockY();
+            int locZ2 = location2.getBlockZ();
 
-        int x1 = max.get(player).getBlockX();
-        int y1 = max.get(player).getBlockY();
-        int z1 = max.get(player).getBlockZ();
+            int x;
+            int y;
+            int z;
 
-        if (min.get(player) == null || max.get(player) == null) {
-            if (config.getFarms().getInt("Amount") != 0) {
+            int x1;
+            int y1;
+            int z1;
+
+            boolean check = false;
+
+            if (min.get(player) != null || max.get(player) != null) {
+                x = min.get(player).getBlockX();
+                y = min.get(player).getBlockY();
+                z = min.get(player).getBlockZ();
+
+                x1 = max.get(player).getBlockX();
+                y1 = max.get(player).getBlockY();
+                z1 = max.get(player).getBlockZ();
+            } else {
                 x = getMinimum(player.getLocation()).getBlockX();
                 y = getMinimum(player.getLocation()).getBlockY();
                 z = getMinimum(player.getLocation()).getBlockZ();
@@ -394,22 +406,90 @@ public class FarmMethods {
                 x1 = getMaximum(player.getLocation()).getBlockX();
                 y1 = getMaximum(player.getLocation()).getBlockY();
                 z1 = getMaximum(player.getLocation()).getBlockZ();
-            } else {
-                return false;
             }
-        }
 
-        if ((locX >= x && locX <= x1) || (locX <= x && locX >= x1)) {
-            if ((locZ >= z && locZ <= z1) || (locZ <= z && locZ >= z1)) {
-                if ((locY >= y && locY <= y1) || (locY <= y && locY >= y1)) {
-                    if (player.hasPermission(FarmPermissions.BYPASS_FARM_AREA.toString())) {
-                        player.sendMessage(ChatColor.AQUA + "The Selection Intersects With A Farm");
-                        return false;
-                    } else {
-                        return true;
+            if ((locX1 >= x && locX1 <= x1) || (locX1 <= x && locX1 >= x1)) {
+                if ((locZ1 >= z && locZ1 <= z1) || (locZ1 <= z && locZ1 >= z1)) {
+                    if ((locY1 >= y && locY1 <= y1) || (locY1 <= y && locY1 >= y1)) {
+                        check = true;
                     }
                 }
             }
+
+            if (!check) {
+                if ((locX2 >= x && locX2 <= x1) || (locX2 <= x && locX2 >= x1)) {
+                    if ((locZ2 >= z && locZ2 <= z1) || (locZ2 <= z && locZ2 >= z1)) {
+                        if ((locY2 >= y && locY2 <= y1) || (locY2 <= y && locY2 >= y1)) {
+                            check = true;
+                        }
+                    }
+                }
+            }
+
+            if (check) {
+                if (player.hasPermission(FarmPermissions.BYPASS_FARM_AREA.toString())) {
+                    player.sendMessage(ChatColor.AQUA + "The Selection Intersects With A Farm");
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+
+        }
+        return false;
+    }
+
+    public boolean intersectsWithFarm(Location location1, Player player) {
+        if (config.getFarms().getInt("Amount") != 0) {
+            int locX1 = location1.getBlockX();
+            int locY1 = location1.getBlockY();
+            int locZ1 = location1.getBlockZ();
+
+            int x;
+            int y;
+            int z;
+
+            int x1;
+            int y1;
+            int z1;
+
+            boolean check = false;
+
+            if (min.get(player) != null || max.get(player) != null) {
+                x = min.get(player).getBlockX();
+                y = min.get(player).getBlockY();
+                z = min.get(player).getBlockZ();
+
+                x1 = max.get(player).getBlockX();
+                y1 = max.get(player).getBlockY();
+                z1 = max.get(player).getBlockZ();
+            } else {
+                x = getMinimum(player.getLocation()).getBlockX();
+                y = getMinimum(player.getLocation()).getBlockY();
+                z = getMinimum(player.getLocation()).getBlockZ();
+
+                x1 = getMaximum(player.getLocation()).getBlockX();
+                y1 = getMaximum(player.getLocation()).getBlockY();
+                z1 = getMaximum(player.getLocation()).getBlockZ();
+            }
+
+            if ((locX1 >= x && locX1 <= x1) || (locX1 <= x && locX1 >= x1)) {
+                if ((locZ1 >= z && locZ1 <= z1) || (locZ1 <= z && locZ1 >= z1)) {
+                    if ((locY1 >= y && locY1 <= y1) || (locY1 <= y && locY1 >= y1)) {
+                        check = true;
+                    }
+                }
+            }
+
+            if (check) {
+                if (player.hasPermission(FarmPermissions.BYPASS_FARM_AREA.toString())) {
+                    player.sendMessage(ChatColor.AQUA + "The Selection Intersects With A Farm");
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+
         }
         return false;
     }

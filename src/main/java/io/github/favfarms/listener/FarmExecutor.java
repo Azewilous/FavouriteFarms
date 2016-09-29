@@ -54,6 +54,8 @@ public class FarmExecutor implements CommandExecutor {
                             }
                         } else if (args[0].equalsIgnoreCase("update")) {
                             FavFarms.update();
+                        } else if (args[0].equalsIgnoreCase("blocks")) {
+                            method.getBlocks(player);
                         } else if (args[0].equalsIgnoreCase("tool")) {
                             if (player.hasPermission(FarmPermissions.COMMAND_TOOL.toString()) || player.isOp()) {
                                 player.getInventory().addItem(tool.getTool());
@@ -63,7 +65,7 @@ public class FarmExecutor implements CommandExecutor {
                             }
                         } else if (args[0].equalsIgnoreCase("show")) {
                             if (player.hasPermission(FarmPermissions.COMMAND_SHOW.toString()) || player.isOp()) {
-                                method.showFarmSelection(player);
+                                method.highlightCorners(player);
                             } else {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
                                         + FarmPermissions.COMMAND_SHOW.toString());
@@ -96,7 +98,7 @@ public class FarmExecutor implements CommandExecutor {
                     if (args.length == 2) {
                         if (args[0].equalsIgnoreCase("start")) {
                             if (player.hasPermission(FarmPermissions.COMMAND_START_FARM.toString()) || player.isOp()) {
-                                if (method.isSelection()) {
+                                if (method.isSelection(player)) {
                                     if (args[1] != null && !(args[1].equals(" "))) {
                                         method.createFarmData(player, args[1]);
                                     } else {

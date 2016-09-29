@@ -7,10 +7,7 @@ import io.github.favfarms.configuration.FarmConfig;
 import io.github.favfarms.farm.FarmMethods;
 import io.github.favfarms.select.SelectionTool;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -70,10 +67,8 @@ public class FarmHandler implements Listener {
             if (pluginGP != null) {
                 if (GriefPrevention.instance.config_claims_modificationTool != null) {
                     if (item.getType() == GriefPrevention.instance.config_claims_modificationTool) {
-                        if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
-                            if (method.intersectsWithFarm(event.getClickedBlock().getLocation(), player)) {
-                                return;
-                            }
+                        if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                            method.intersectsWithFarm(event.getClickedBlock().getLocation(), player);
                         }
                     }
                 }
@@ -87,11 +82,10 @@ public class FarmHandler implements Listener {
                         if (selection != null) {
                             Location minLoc = selection.getMinimumPoint();
                             Location maxLoc = selection.getMaximumPoint();
-                            if (method.intersectsWithFarm(minLoc, player)) {
-                                return;
-                            }
-                            if (method.intersectsWithFarm(maxLoc, player)) {
-                                return;
+                            if (minLoc != null && maxLoc != null) {
+                                if (method.intersectsWithFarm(minLoc, maxLoc, player)) {
+                                    return;
+                                }
                             }
                         }
                     }
@@ -122,7 +116,7 @@ public class FarmHandler implements Listener {
                                 player.sendMessage(ChatColor.BLUE + "Selected Second Block @ " + "x:" + x + " y:" + y
                                         + " z:" + z);
                                 method.calculateFarmSize(player, blockVecFirst.get(player), blockVecSecond.get(player));
-                                if (method.isValidFarmSize()) {
+                                if (method.isValidFarmSize(player)) {
                                     if (method.isValidFarmLocation(player, blockVecFirst.get(player)
                                             , blockVecSecond.get(player))) {
                                         method.count--;
