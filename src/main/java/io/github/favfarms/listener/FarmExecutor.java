@@ -70,13 +70,6 @@ public class FarmExecutor implements CommandExecutor {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
                                         + FarmPermissions.COMMAND_SHOW.toString());
                             }
-                        } else if (args[0].equalsIgnoreCase("remove")) {
-                            if (player.hasPermission(FarmPermissions.COMMAND_REMOVE_FARM.toString()) || player.isOp()) {
-                                method.removeFarm(player);
-                            } else {
-                                player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
-                                        + FarmPermissions.COMMAND_REMOVE_FARM.toString());
-                            }
                         } else if (args[0].equalsIgnoreCase("inv")) {
                             if (player.hasPermission(FarmPermissions.COMMAND_INV_SELF.toString()) || player.isOp()) {
                                 method.openFarmInv(player);
@@ -110,6 +103,17 @@ public class FarmExecutor implements CommandExecutor {
                             } else {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
                                         + FarmPermissions.COMMAND_START_FARM.toString());
+                            }
+                        } else if (args[0].equalsIgnoreCase("remove")) {
+                            if (player.hasPermission(FarmPermissions.COMMAND_REMOVE_FARM.toString()) || player.isOp()) {
+                                if (args[1] != null && !(args[1].equals(" "))) {
+                                    method.removeFarm(player, args[1]);
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "Farm Name Cannot Be Empty");
+                                }
+                            } else {
+                                player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                        + FarmPermissions.COMMAND_REMOVE_FARM.toString());
                             }
                         } else if (args[0].equalsIgnoreCase("info")) {
                             if (player.hasPermission(FarmPermissions.COMMAND_INFO_OTHERS.toString()) || player.isOp()) {

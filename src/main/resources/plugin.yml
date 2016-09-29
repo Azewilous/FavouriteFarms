@@ -46,3 +46,9 @@ permissions:
     description: Access To See Animals A Player Owns
   favfarms.bypass.area:
     description: Access To Create Farm On Top of Claims/Regions
+  favfarms.farms.multiple:
+    description: Access To Use Multiple Farms Command
+  favfarms.farms.multiple.:
+    description: Amount Of Farms A Player Can Have
+  favfarms.farm.multiple.unlimited:
+    description: Access To Create An Unlimited Amount Of Farms

@@ -77,9 +77,24 @@ public class FarmMethods {
     //End Of
 
     public void createFarmData(Player player, String farmName) {
+        if (getFarmsOwned(player.getUniqueId()) >= 1 || player.isOp()) {
+            if (!player.hasPermission(FarmPermissions.COMMAND_FARM_MULTIPLE.toString())) {
+                if (!player.hasPermission(FarmPermissions.COMMAND_FARM_MULTIPLE_UNLIMITED.toString())) {
+                    if (player.hasPermission(FarmPermissions.COMMAND_FARM_MULTIPLEX.toString())) {
+                        int amount = Integer.parseInt(FarmPermissions.COMMAND_FARM_MULTIPLEX.toString().split(".")[3]);
+                        if (!(amount >= getFarmsOwned(player.getUniqueId()))) {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
         if (recentCreate.containsKey(player.getUniqueId())) {
+            if (player.hasPermission(FarmPermissions.BYPASS_FARM_CREATE_COOLDOWN.toString())) {
+                recentCreate.put(player.getUniqueId(), 0L);
+            }
             if (recentCreate.get(player.getUniqueId()) == 0L) {
-                if (!farmExist(farmName)) {
+                if (farmExist(farmName)) {
                     setID();
                     farm.createFarm(farmName, player.getUniqueId(), ID, blocks);
                     createFarmArea(player, blkLoc1.get(player));
@@ -619,17 +634,34 @@ public class FarmMethods {
         return FavFarms.getInstance().getServer().getPlayer(uuid);
     }
 
-    public void removeFarm(Player player) {
+    public void removeFarm(Player player, String name) {
         if (hasFarm(player.getUniqueId())) {
-            String name = getFarmForPlayer(player);
-            if (config.getFarms().getString("Farms." + name) != null) {
-                config.getFarms().set("Farms." + name, null);
-                int amount = config.getFarms().getInt("Amount");
-                amount--;
-                config.getFarms().set("Amount", amount);
-                config.getPlayerData().set("PlayerData." + player.getUniqueId() + ".FarmsOwned", amount);
+            if (farmExist(name)) {
+                if (isFarmOwner(player, name) || player.hasPermission(FarmPermissions.COMMAND_REMOVE_FARM_OTHER.toString())
+                        || player.isOp()) {
+                    if (config.getFarms().getString("Farms." + name) != null) {
+                        config.getFarms().set("Farms." + name, null);
+                        int amount = config.getFarms().getInt("Amount");
+                        amount--;
+                        config.getFarms().set("Amount", amount);
+                        config.getPlayerData().set("PlayerData." + player.getUniqueId() + ".FarmsOwned", amount);
+                    }
+                } else {
+                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have Permission To Remove This Farm");
+                }
+            } else {
+                player.sendMessage(ChatColor.DARK_AQUA + "This Farm Does Not Exist");
             }
         }
+    }
+
+    public boolean isFarmOwner(Player player, String name) {
+        if (farmExist(name)) {
+            if (config.getFarms().getString("Farms." + name + ".Creator").equalsIgnoreCase(player.getUniqueId().toString())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void removeFarmAnimal(Animals animal, Player player) {
@@ -1508,10 +1540,13 @@ public class FarmMethods {
         return false;
     }
 
+    //TODO FIX FARM REMOVE
     public boolean farmExist(String name) {
         if (config.getFarms().get("Farms.") != null) {
-            if (!config.getFarms().getString("Farms.").equalsIgnoreCase(name)) {
-                return true;
+            if (config.getFarms().getString("Farms." + name) != null) {
+                if (config.getFarms().getString("Farms.").equalsIgnoreCase(name)) {
+                    return true;
+                }
             }
         }
         return false;

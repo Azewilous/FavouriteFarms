@@ -29,9 +29,9 @@ public class FarmText {
                 + "?3/farm info <player> : Info - Shows Info About A Players Farm\n"
                 + "?3/farm obtain catcher : Info - Gives Player Item To Catch Animals\n"
                 + "?3/farm set spawn : Info - Sets The Farm Spawn For A Player\n"
-                + "?3/farm remove : Info - Removes Farm For Player Self\n"
-                + "?3/farm inv <player> : Opens A Players Farm Inventory\n"
-                + "?3/farm animals <player> : Shows Animals A Player Owns\n"
+                + "?3/farm remove <name> : Info - Removes Farm For Player Self\n"
+                + "?3/farm inv <player> : Info - Opens A Players Farm Inventory\n"
+                + "?3/farm animals <player> : Info - Shows Animals A Player Owns\n"
                 + "?3Current Version : Info - " + farms.getDescription().getVersion() + "\n"
                 + "?8---------------------By: Azewilous----------------\n";
         String aboutTrans = ChatColor.translateAlternateColorCodes('?', about);

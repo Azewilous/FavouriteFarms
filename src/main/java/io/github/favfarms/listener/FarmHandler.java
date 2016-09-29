@@ -5,6 +5,7 @@ import com.sk89q.worldedit.bukkit.selections.Selection;
 import io.github.favfarms.FavFarms;
 import io.github.favfarms.configuration.FarmConfig;
 import io.github.favfarms.farm.FarmMethods;
+import io.github.favfarms.permission.FarmPermissions;
 import io.github.favfarms.select.SelectionTool;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import org.bukkit.*;
@@ -95,34 +96,36 @@ public class FarmHandler implements Listener {
                 if (item.isSimilar(selTool)) {
                     if (item.hasItemMeta()) {
                         if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
-                            if (method.count == 0) {
-                                World world = event.getClickedBlock().getLocation().getWorld();
-                                double x = event.getClickedBlock().getLocation().getBlockX();
-                                double y = event.getClickedBlock().getLocation().getBlockY();
-                                double z = event.getClickedBlock().getLocation().getBlockZ();
-                                blockLocFirst.put(player, new Location(world, x, y, z));
-                                blockVecFirst.put(player, new BlockVector(x, y, z));
-                                player.sendMessage(ChatColor.BLUE + "Selected First Block @ " + "x:" + x + " y:" + y
-                                        + " z:" + z);
-                                method.count++;
-                                player.sendMessage(ChatColor.AQUA + "Left Click Another Block");
-                            } else if (method.count == 1) {
-                                World world = event.getClickedBlock().getLocation().getWorld();
-                                double x = event.getClickedBlock().getLocation().getBlockX();
-                                double y = event.getClickedBlock().getLocation().getBlockY();
-                                double z = event.getClickedBlock().getLocation().getBlockZ();
-                                blockLocSecond.put(player, new Location(world, x, y, z));
-                                blockVecSecond.put(player, new BlockVector(x, y, z));
-                                player.sendMessage(ChatColor.BLUE + "Selected Second Block @ " + "x:" + x + " y:" + y
-                                        + " z:" + z);
-                                method.calculateFarmSize(player, blockVecFirst.get(player), blockVecSecond.get(player));
-                                if (method.isValidFarmSize(player)) {
-                                    if (method.isValidFarmLocation(player, blockVecFirst.get(player)
-                                            , blockVecSecond.get(player))) {
-                                        method.count--;
+                            if (player.hasPermission(FarmPermissions.COMMAND_START_FARM.toString()) || player.isOp()) {
+                                if (method.count == 0) {
+                                    World world = event.getClickedBlock().getLocation().getWorld();
+                                    double x = event.getClickedBlock().getLocation().getBlockX();
+                                    double y = event.getClickedBlock().getLocation().getBlockY();
+                                    double z = event.getClickedBlock().getLocation().getBlockZ();
+                                    blockLocFirst.put(player, new Location(world, x, y, z));
+                                    blockVecFirst.put(player, new BlockVector(x, y, z));
+                                    player.sendMessage(ChatColor.BLUE + "Selected First Block @ " + "x:" + x + " y:" + y
+                                            + " z:" + z);
+                                    method.count++;
+                                    player.sendMessage(ChatColor.AQUA + "Left Click Another Block");
+                                } else if (method.count == 1) {
+                                    World world = event.getClickedBlock().getLocation().getWorld();
+                                    double x = event.getClickedBlock().getLocation().getBlockX();
+                                    double y = event.getClickedBlock().getLocation().getBlockY();
+                                    double z = event.getClickedBlock().getLocation().getBlockZ();
+                                    blockLocSecond.put(player, new Location(world, x, y, z));
+                                    blockVecSecond.put(player, new BlockVector(x, y, z));
+                                    player.sendMessage(ChatColor.BLUE + "Selected Second Block @ " + "x:" + x + " y:" + y
+                                            + " z:" + z);
+                                    method.calculateFarmSize(player, blockVecFirst.get(player), blockVecSecond.get(player));
+                                    if (method.isValidFarmSize(player)) {
+                                        if (method.isValidFarmLocation(player, blockVecFirst.get(player)
+                                                , blockVecSecond.get(player))) {
+                                            method.count--;
+                                        }
+                                    } else {
+                                        player.sendMessage(ChatColor.DARK_AQUA + "Selection must be larger than 15 blocks");
                                     }
-                                } else {
-                                    player.sendMessage(ChatColor.DARK_AQUA + "Selection must be larger than 15 blocks");
                                 }
                             }
                         }
@@ -178,7 +181,7 @@ public class FarmHandler implements Listener {
         ItemStack catchTool = tool.getCatcher();
         if (event.getRightClicked() instanceof Item) {
             ItemStack item = ((Item) event.getRightClicked()).getItemStack();
-            if (item.equals(catchTool)) {
+            if (item.isSimilar(catchTool)) {
                 if (!(method.isObtainable())) {
                     event.setCancelled(true);
                     getServer().broadcastMessage("Is Not Obtainable");
