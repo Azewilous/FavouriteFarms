@@ -22,20 +22,28 @@ permissions:
     default: true
   favfarms.reload:
     description: Access To Reload Command
-  favfarms.tool:
+  favfarms.tool.self:
     description: Access To Farm Creation Tool
-  favfarms.show:
+  favfarms.tool.other:
+    description: Access To Give Another Player A Creation Tool
+  favfarms.show.self:
     description: Access To Highlight Farm Area For Player
-  favfarms.create:
+  favfarms.show.other:
+    description: Access To See Another Players Farm Area
+  favfarms.farms.create:
     description: Access To Create A Farm
-  favfarms.remove:
+  favfarms.create.other:
+    description: Access To Create A Farm For Another Player
+  favfarms.farms.remove:
     description: Access To Remove A Farm
   favfarms.info.self:
     description: Access To Get Farm Info For Self
   favfarms.info.other:
     description: Access To Get Farm Info For Others
-  favfarms.obtain.catcher:
+  favfarms.catcher.self:
     description: Access To Obtain Catch Tool
+  favfarms.catcher.other:
+    description: Access To Give Others A Catch Tool
   favfarms.set.spawn:
     description: Access To Set Farm Spawn
   favfarms.inv.self:

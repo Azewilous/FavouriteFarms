@@ -53,22 +53,31 @@ public class FarmExecutor implements CommandExecutor {
                                         + FarmPermissions.COMMAND_RELOAD.toString());
                             }
                         } else if (args[0].equalsIgnoreCase("update")) {
-                            FavFarms.update();
-                        } else if (args[0].equalsIgnoreCase("blocks")) {
-                            method.getBlocks(player);
+                            if (player.isOp()) {
+                                FavFarms.update();
+                            } else {
+                                player.sendMessage(ChatColor.DARK_RED + "Must Be An OP To Run This Command");
+                            }
                         } else if (args[0].equalsIgnoreCase("tool")) {
-                            if (player.hasPermission(FarmPermissions.COMMAND_TOOL.toString()) || player.isOp()) {
-                                player.getInventory().addItem(tool.getTool());
+                            if (player.hasPermission(FarmPermissions.COMMAND_TOOL_SELF.toString()) || player.isOp()) {
+                                method.giveSelector(player);
                             } else {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
-                                        + FarmPermissions.COMMAND_TOOL.toString());
+                                        + FarmPermissions.COMMAND_TOOL_SELF.toString());
+                            }
+                        } else if (args[0].equalsIgnoreCase("catcher")) {
+                            if (player.hasPermission(FarmPermissions.COMMAND_OBTAIN_CATCHER.toString()) || player.isOp()) {
+                                method.giveCatcher(player);
+                            } else {
+                                player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                        + FarmPermissions.COMMAND_OBTAIN_CATCHER.toString());
                             }
                         } else if (args[0].equalsIgnoreCase("show")) {
-                            if (player.hasPermission(FarmPermissions.COMMAND_SHOW.toString()) || player.isOp()) {
+                            if (player.hasPermission(FarmPermissions.COMMAND_SHOW_SELF.toString()) || player.isOp()) {
                                 method.highlightCorners(player);
                             } else {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
-                                        + FarmPermissions.COMMAND_SHOW.toString());
+                                        + FarmPermissions.COMMAND_SHOW_SELF.toString());
                             }
                         } else if (args[0].equalsIgnoreCase("inv")) {
                             if (player.hasPermission(FarmPermissions.COMMAND_INV_SELF.toString()) || player.isOp()) {
@@ -126,15 +135,6 @@ public class FarmExecutor implements CommandExecutor {
                             } else {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
                                         + FarmPermissions.COMMAND_INFO_OTHERS.toString());
-                            }
-                        } else if (args[0].equalsIgnoreCase("obtain")) {
-                            if (args[1].equalsIgnoreCase("catcher")) {
-                                if (player.hasPermission(FarmPermissions.COMMAND_OBTAIN_CATCHER.toString()) || player.isOp()) {
-                                    method.giveCatcher(player);
-                                } else {
-                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
-                                            + FarmPermissions.COMMAND_OBTAIN_CATCHER.toString());
-                                }
                             }
                         } else if (args[0].equalsIgnoreCase("set")) {
                             if (args[1].equalsIgnoreCase("spawn")) {

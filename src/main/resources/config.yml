@@ -13,15 +13,19 @@ Selector:
   DisplayName: '&6Farm Selector'
 Delays:
 #How Long Until A Player Can Create Another Farm In Minutes
-FarmCreation: 60
+  FarmCreation: 60
 #How Long Until A Player Can Recieve More Catchers In Minutes
-Cooldown: 3600
+  CatcherCooldown: 1
+#If A Farm Commands Have A Cooldown And For How Long In seconds
+  CommandCooldown:
+    Enabled: true
+    Time: 3
 #Blocks A Player Starts With and Increases By Per Level
-Blocks:
+Size:
 #Amount Of Blocks A Player Starts With
-Amount: 150
+  Amount: 150
 #Increment Amount Per Level
-Increment: 10
+  Increment: 10
 #Catch Rate For Animals
 CatchRate:
   Chicken: 78.6

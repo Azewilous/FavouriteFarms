@@ -8,7 +8,10 @@ import io.github.favfarms.farm.FarmMethods;
 import io.github.favfarms.permission.FarmPermissions;
 import io.github.favfarms.select.SelectionTool;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
-import org.bukkit.*;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,6 +20,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -43,6 +47,7 @@ public class FarmHandler implements Listener {
 
     FarmMethods method = FarmMethods.getInstance();
     SelectionTool tool = SelectionTool.getInstance();
+    FarmConfig config = FarmConfig.getInstance();
 
     HashMap<Player, Location> blockLocFirst = new HashMap<>();
     HashMap<Player, Location> blockLocSecond = new HashMap<>();
@@ -123,26 +128,14 @@ public class FarmHandler implements Listener {
                                                 , blockVecSecond.get(player))) {
                                             method.count--;
                                         }
-                                    } else {
-                                        player.sendMessage(ChatColor.DARK_AQUA + "Selection must be larger than 15 blocks");
                                     }
                                 }
+                            } else {
+                                player.sendMessage(ChatColor.DARK_AQUA + "No Permission To Use");
                             }
                         }
                     }
                 }
-            }
-        }
-    }
-
-    @SuppressWarnings("unused")
-    @EventHandler
-    public void blockBreak(BlockBreakEvent event) {
-        Player player = event.getPlayer();
-        ItemStack selTool = tool.getTool();
-        if (selTool != null && player.getInventory().getItemInMainHand() != null) {
-            if (player.getInventory().getItemInMainHand().isSimilar(selTool)) {
-                event.setCancelled(true);
             }
         }
     }
@@ -195,10 +188,10 @@ public class FarmHandler implements Listener {
     public void playerJoinServer(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (method.hasFarm(player.getUniqueId())) {
-            if (FarmConfig.getInstance().getAnimals().getString("Animals") != null) {
+            if (config.getAnimals().getString("Animals") != null) {
                 method.loadAnimals(player);
             }
-            if (FarmConfig.getInstance().getFarms().getString("Farms") != null) {
+            if (config.getFarms().getString("Farms") != null) {
                 method.loadFarmExp(player);
                 method.loadFarmLevel(player);
             }
@@ -282,6 +275,36 @@ public class FarmHandler implements Listener {
             if (entity instanceof Animals) {
                 Animals animal = (Animals) entity;
                 method.removeFarmAnimal(animal, method.getOwnerFromAnimal(animal.getUniqueId()));
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @EventHandler
+    public void blockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        ItemStack selTool = tool.getTool();
+        if (selTool != null && player.getInventory().getItemInMainHand() != null) {
+            if (player.getInventory().getItemInMainHand().isSimilar(selTool)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @EventHandler
+    public void commandSend(PlayerCommandPreprocessEvent event) {
+        String cmd = event.getMessage();
+        Player player = event.getPlayer();
+        if (cmd.startsWith("/farm")) {
+            if (config.getFav().getBoolean("CommandCooldown.Enabled")) {
+                if (!method.isDelayedCommand(player)) {
+                    method.delayCommand(player, config.getFav().getLong("CommandCooldown.Time"));
+                } else {
+                    player.sendMessage(ChatColor.DARK_AQUA + "On Cooldown For " + ChatColor.GOLD + method.getDelayedLeft(player)
+                            + ChatColor.DARK_AQUA + " More Seconds");
+                    event.setCancelled(true);
+                }
             }
         }
     }

@@ -21,6 +21,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
@@ -72,6 +73,8 @@ public class FarmMethods {
     //CoolDowns
     HashMap<UUID, Long> recentCreate = new HashMap<>();
     HashMap<UUID, Long> highlighting = new HashMap<>();
+    HashMap<UUID, Long> delayCmdSend = new HashMap<>();
+    HashMap<UUID, Long> catcherObtain = new HashMap<>();
 
     //Farm Animal Data
     Multimap<UUID, UUID> animalsMap = ArrayListMultimap.create();
@@ -103,10 +106,15 @@ public class FarmMethods {
             if (!farmExist(farmName)) {
                 setID();
                 farm.createFarm(farmName, player.getUniqueId(), ID, blocks.get(player.getUniqueId()));
+
                 createFarmArea(player, blkLoc1.get(player));
                 createPlayerData(player, getLevel(player), getExp(player));
-                recentCreate.put(player.getUniqueId(), 10L);
+
+                Long time = config.getFav().getLong("Delays.FarmCreation");
+
+                recentCreate.put(player.getUniqueId(), time);
                 applyCooldown(player);
+
                 player.sendMessage(ChatColor.GREEN + "Created Farm " + farmName + " with bounds min("
                         + max.get(player) + ") - max (" + min.get(player) + ")");
             } else {
@@ -149,16 +157,16 @@ public class FarmMethods {
         vector2.put(player, new Vector(blockVec2.getX(), blockVec2.getY() + 15, blockVec2.getZ()));
         min.put(player, Vector.getMinimum(vector1.get(player), vector2.get(player)));
         max.put(player, Vector.getMaximum(vector1.get(player), vector2.get(player)));
-        int count = 0;
+        int counter = 0;
         for (int x = min.get(player).getBlockX(); x <= max.get(player).getBlockX(); x++) {
             for (int z = min.get(player).getBlockZ(); z <= max.get(player).getBlockZ(); z++) {
-                count++;
+                counter++;
                 for (int y = min.get(player).getBlockY(); y <= max.get(player).getBlockY(); y++) {
                     locations.add(new Location(player.getWorld(), x, y, z));
                 }
             }
         }
-        blocks.put(player.getUniqueId(), count);
+        blocks.put(player.getUniqueId(), counter);
     }
 
     /*
@@ -271,24 +279,62 @@ public class FarmMethods {
 
         countDownHighlight(player);
 
-        BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
-        scheduler.scheduleSyncRepeatingTask(FavFarms.getInstance(), () -> {
-            if (highlighting.get(player.getUniqueId()) != 0) {
-                world.spawnParticle(Particle.SPELL_WITCH, blockTop.get(player.getUniqueId()).getLocation()
-                        .add(0, 0, 0), 20, 0.0, -10, 0.0, 15);
-                world.spawnParticle(Particle.SPELL_WITCH, blockBot.get(player.getUniqueId()).getLocation()
-                        .add(0, 0, 0), 20, 0.0, -10, 0.0, 15);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (highlighting.get(player.getUniqueId()) != 0) {
+                    world.spawnParticle(Particle.SPELL_WITCH, blockTop.get(player.getUniqueId()).getLocation()
+                            .add(0, 0, 0), 20, 0.0, -10, 0.0, 15);
+                    world.spawnParticle(Particle.SPELL_WITCH, blockBot.get(player.getUniqueId()).getLocation()
+                            .add(0, 0, 0), 20, 0.0, -10, 0.0, 15);
+                } else {
+                    player.sendMessage(ChatColor.DARK_AQUA + "Farm Highlights Have Faded");
+                    cancel();
+                }
             }
-        }, 0, 1);
+        }.runTaskTimer(FavFarms.getInstance(), 0, 1);
     }
 
     public void countDownHighlight(Player player) {
-        BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
-        scheduler.scheduleSyncRepeatingTask(FavFarms.getInstance(), () -> {
-            if (highlighting.get(player.getUniqueId()) != 0) {
-                highlighting.put(player.getUniqueId(), highlighting.get(player.getUniqueId()) - 1);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (highlighting.containsKey(player.getUniqueId())) {
+                    if (highlighting.get(player.getUniqueId()) != 0) {
+                        highlighting.put(player.getUniqueId(), highlighting.get(player.getUniqueId()) - 1);
+                    } else {
+                        highlighting.remove(player.getUniqueId());
+                        cancel();
+                    }
+                }
             }
-        }, 0, 20);
+        }.runTaskTimer(FavFarms.getInstance(), 0, 20);
+    }
+
+    public void delayCommand(Player player, Long time) {
+        delayCmdSend.put(player.getUniqueId(), time);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (delayCmdSend.containsKey(player.getUniqueId())) {
+                    if (delayCmdSend.get(player.getUniqueId()) != 0) {
+                        delayCmdSend.put(player.getUniqueId(), getDelayedLeft(player) - 1);
+                    } else {
+                        delayCmdSend.remove(player.getUniqueId());
+                        player.sendMessage(ChatColor.DARK_AQUA + "Farm Commands Are Know Off Cooldown");
+                        cancel();
+                    }
+                }
+            }
+        }.runTaskTimer(FavFarms.getInstance(), 0, 20);
+    }
+
+    public boolean isDelayedCommand(Player player) {
+        return delayCmdSend.containsKey(player.getUniqueId());
+    }
+
+    public Long getDelayedLeft(Player player) {
+        return delayCmdSend.get(player.getUniqueId());
     }
 
     public void reloadFavFarms() {
@@ -305,17 +351,32 @@ public class FarmMethods {
     }
 
     public boolean isValidFarmSize(Player player) {
-        return getBlocks(player) > 15;
+        int size = config.getFav().getInt("Size.Amount");
+        if (getBlocks(player) > 15) {
+            if (getBlocks(player) >= size) {
+                return true;
+            } else {
+                int required = getBlocks(player) - size;
+                player.sendMessage(ChatColor.DARK_AQUA + "You Don't Have Enough Farm Blocks For This Claim, You Require "
+                        + required + " More Blocks");
+            }
+        } else {
+            player.sendMessage(ChatColor.DARK_AQUA + "Selection Must Be At least 15 Blocks");
+        }
+        return false;
     }
 
     public Integer getBlocks(Player player) {
-        if (blocks.get(player.getUniqueId()) > 15) {
+        if (blocks.get(player.getUniqueId()) != null) {
             return blocks.get(player.getUniqueId());
         }
-        String name = getFarmForPlayer(player);
-        String str = config.getFarms().getString("Farms." + name + ".Size");
-        str = str.replaceAll("[^0-9]+", " ");
-        return Integer.parseInt(str.trim());
+        if (config.getFarms().getString("Farms.") != null) {
+            String name = getFarmForPlayer(player);
+            String str = config.getFarms().getString("Farms." + name + ".Size");
+            str = str.replaceAll("[^0-9]+", " ");
+            return Integer.parseInt(str.trim());
+        }
+        return 0;
     }
 
     public boolean isValidFarmLocation(Player player, BlockVector blockVecFirst, BlockVector blockVecSecond) {
@@ -358,7 +419,7 @@ public class FarmMethods {
                 }
 
                 RegionManager manager = wg.getRegionManager(world);
-                LocalPlayer lp = (LocalPlayer) player;
+                LocalPlayer lp = wg.wrapPlayer(player);
                 if (manager != null) {
                     ProtectedRegion rg = null;
                     Map<String, ProtectedRegion> rgs = WorldGuardPlugin.inst().getRegionManager(loc1.getWorld()).getRegions();
@@ -907,13 +968,44 @@ public class FarmMethods {
 
     }
 
-    public void giveCatcher(Player player) {
+    public void giveSelector(Player player) {
         Inventory inv = player.getInventory();
-        if (hasEmptySlots(inv)) {
-            inv.addItem(sel.getCatcher());
-            player.sendMessage(ChatColor.DARK_AQUA + "You Have Been given (" + sel.getCatcher().getAmount()
-                    + ") Catchers");
+        if (!inv.contains(sel.getTool())) {
+            if (hasEmptySlots(inv)) {
+                inv.setItem(getEmptySlots(inv).get(0), sel.getTool());
+                player.sendMessage(ChatColor.DARK_AQUA + "Obtained Farm Selection Tool");
+            }
+        } else {
+            player.sendMessage(ChatColor.DARK_AQUA + "You Already Have A Farm Selector");
         }
+    }
+
+    public void giveCatcher(Player player) {
+        Long time = config.getFav().getLong("Delays.CatcherCooldown");
+        if (!catcherObtain.containsKey(player.getUniqueId())) {
+            Inventory inv = player.getInventory();
+            if (hasEmptySlots(inv)) {
+                inv.setItem(getEmptySlots(inv).get(0), sel.getCatcher());
+                player.sendMessage(ChatColor.DARK_AQUA + "You Have Been given (" + sel.getCatcher().getAmount()
+                        + ") Catchers");
+                catcherObtain.put(player.getUniqueId(), time);
+                applyCatcherCooldown(player, catcherObtain.get(player.getUniqueId()));
+            }
+        } else {
+            player.sendMessage(ChatColor.DARK_AQUA + "This Command Has" + ChatColor.GOLD + " (" + ChatColor.GOLD + time
+                    + ") " + ChatColor.DARK_AQUA + "Minute Cooldown");
+        }
+    }
+
+    public void applyCatcherCooldown(Player player, Long time) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (catcherObtain.containsKey(player.getUniqueId())) {
+                    catcherObtain.remove(player.getUniqueId());
+                }
+            }
+        }.runTaskLater(FavFarms.getInstance(), 20 * (time * 60));
     }
 
     public Entity getAnimalFromItem(ItemStack item, World world) {
@@ -1145,8 +1237,6 @@ public class FarmMethods {
         }
         return color;
     }
-
-
 
     public boolean hasEmptySlots(Inventory inv) {
         return getEmptySlots(inv).size() > 0;
