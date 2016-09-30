@@ -1373,34 +1373,34 @@ public class FarmMethods {
 
     public void saveFarmLevel(Player player) {
         if (config.getPlayerData().get("PlayerData") != null) {
-            String name = getFarmForPlayer(player);
-            config.getPlayerData().set("PlayerData." + name + ".Level", getLevel(player));
+            UUID uuid = player.getUniqueId();
+            config.getPlayerData().set("PlayerData." + uuid + ".Level", getLevel(player));
             config.saveFarms();
         }
     }
 
     public void loadFarmLevel(Player player) {
         if (config.getPlayerData().get("PlayerData") != null) {
-            String name = getFarmForPlayer(player);
-            UUID playerUUID = UUID.fromString(config.getPlayerData().getString("PlayerData." + name + ".OwnerUUID"));
-            int tempLevel = config.getPlayerData().getInt("PlayerData." + name + ".Level");
+            UUID uuid = player.getUniqueId();
+            UUID playerUUID = UUID.fromString(config.getPlayerData().getString("PlayerData." + uuid + ".OwnerUUID"));
+            int tempLevel = config.getPlayerData().getInt("PlayerData." + uuid + ".Level");
             level.put(playerUUID, tempLevel);
         }
     }
 
     public void saveFarmExp(Player player) {
         if (config.getPlayerData().get("PlayerData") != null) {
-            String name = getFarmForPlayer(player);
-            config.getPlayerData().set("PlayerData." + name + ".Experience", getExp(player));
+            UUID uuid = player.getUniqueId();
+            config.getPlayerData().set("PlayerData." + uuid + ".Experience", getExp(player));
             config.saveFarms();
         }
     }
 
     public void loadFarmExp(Player player) {
         if (config.getPlayerData().get("PlayerData") != null) {
-            String name = getFarmForPlayer(player);
-            int tempExp = config.getPlayerData().getInt("PlayerData." + name + ".Experience");
-            UUID playerUUID = UUID.fromString(config.getPlayerData().getString("PlayerData." + name + ".OwnerUUID"));
+            UUID uuid = player.getUniqueId();
+            int tempExp = config.getPlayerData().getInt("PlayerData." + uuid + ".Experience");
+            UUID playerUUID = UUID.fromString(config.getPlayerData().getString("PlayerData." + uuid + ".OwnerUUID"));
             experience.put(playerUUID, tempExp);
         }
     }
