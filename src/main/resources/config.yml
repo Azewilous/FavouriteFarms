@@ -13,7 +13,7 @@ Selector:
   DisplayName: '&6Farm Selector'
 Delays:
 #How Long Until A Player Can Create Another Farm In Minutes
-  FarmCreation: 60
+  FarmCreation: 1
 #How Long Until A Player Can Recieve More Catchers In Minutes
   CatcherCooldown: 1
 #If A Farm Commands Have A Cooldown And For How Long In seconds
@@ -37,7 +37,7 @@ CatchRate:
   Rabbit: 18.4
   Sheep: 72.9
   Wolf: 36.6
-#Experience Gained For Capturing
+#Experience Gained For Capturing In A Range
 Experience:
   Most:
     Chicken: 18

@@ -7,6 +7,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * FavFarms Created by Awesome Red on 7/15/2016.
  */
@@ -45,6 +48,17 @@ public class SelectionTool {
         return catcher;
     }
 
+    public ItemStack createResetCatcherCooldown() {
+        ItemStack reset = new ItemStack(Material.WATCH, 1);
+        ItemMeta resetMeta = reset.getItemMeta();
+        resetMeta.setDisplayName(ChatColor.BLACK  + "" + ChatColor.MAGIC+ "Catcher Cooldown Reset");
+        List<String> lore = new ArrayList<>();
+        lore.add(ChatColor.GREEN + "Reset Catcher Cooldown");
+        resetMeta.setLore(lore);
+        reset.setItemMeta(resetMeta);
+        return reset;
+    }
+
     public ItemStack getTool() {
         ItemStack item = createTool();
         if (item != null) {
@@ -55,6 +69,14 @@ public class SelectionTool {
 
     public ItemStack getCatcher() {
         ItemStack item = createCatcher();
+        if (item != null) {
+            return item;
+        }
+        return null;
+    }
+
+    public ItemStack getResetCatcherItem() {
+        ItemStack item = createResetCatcherCooldown();
         if (item != null) {
             return item;
         }

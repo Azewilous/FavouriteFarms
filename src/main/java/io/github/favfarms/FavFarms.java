@@ -1,5 +1,7 @@
 package io.github.favfarms;
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import io.github.favfarms.configuration.FarmConfig;
 import io.github.favfarms.farm.FarmMethods;
 import io.github.favfarms.listener.FarmExecutor;
@@ -46,6 +48,20 @@ public class FavFarms extends JavaPlugin {
 
         console.sendMessage(ChatColor.LIGHT_PURPLE + "[Favourite Farms ]  De-Initiating");
         instance = null;
+    }
+
+    public void getCount(Player player, String server) {
+
+        if (server == null) {
+            server = "ALL";
+        }
+
+        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        out.writeUTF("PlayerCount");
+        out.writeUTF(server);
+
+        player.sendPluginMessage(this, "BungeeCord", out.toByteArray());
+
     }
 
     public static Plugin getInstance() {

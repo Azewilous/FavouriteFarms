@@ -60,8 +60,16 @@ public class FarmHandler implements Listener {
         Player player = event.getPlayer();
         ItemStack selTool = tool.getTool();
         ItemStack catchTool = tool.getCatcher();
+        ItemStack resetTool = tool.getResetCatcherItem();
         ItemStack item = event.getItem();
         if (item != null) {
+            if (item.isSimilar(resetTool)) {
+                if (resetTool.getItemMeta().getDisplayName().equalsIgnoreCase(tool.getResetCatcherItem().getItemMeta().getDisplayName())) {
+                    if (event.getAction() == Action.RIGHT_CLICK_AIR) {
+                        method.removeCatcherCooldown(player);
+                    }
+                }
+            }
             if (item.isSimilar(catchTool)) {
                 if (catchTool.getItemMeta().getDisplayName().equalsIgnoreCase(tool.getCatcher().getItemMeta().getDisplayName())) {
                     if (event.getAction() == Action.RIGHT_CLICK_AIR) {
@@ -208,58 +216,60 @@ public class FarmHandler implements Listener {
         if (clicked != null) {
             if (clicked.hasItemMeta()) {
                 if (clicked.getItemMeta().hasLore()) {
-                    if (clicked.getType().equals(Material.STAINED_CLAY)) {
-                        if (inventory.getName().equals(FarmMethods.getInstance().getAnimalInv(player, clicked).getName())) {
-                            method.openFarmInv(player);
-                        } else if (inventory.getName().equals(FarmMethods.getInstance().getModifyInv(player, clicked).getName())) {
-                            method.openFarmInv(player);
+                    if (method.isAnimalInvItem(player, clicked)) {
+                        if (clicked.getType().equals(Material.STAINED_CLAY)) {
+                            if (inventory.getName().equals(FarmMethods.getInstance().getAnimalInv(player, clicked).getName())) {
+                                method.openFarmInv(player);
+                            } else if (inventory.getName().equals(FarmMethods.getInstance().getModifyInv(player, clicked).getName())) {
+                                method.openFarmInv(player);
+                            }
                         }
-                    }
-                    if (inventory.getName().equals(method.getFarmInv(player).getName())) {
-                        event.setCancelled(true);
-                        if (clicked.getType() == Material.MONSTER_EGG) {
-                            if (method.isFarmEgg(clicked)) {
+                        if (inventory.getName().equals(method.getFarmInv(player).getName())) {
+                            event.setCancelled(true);
+                            if (clicked.getType() == Material.MONSTER_EGG) {
+                                if (method.isFarmEgg(clicked)) {
+                                    method.openAnimalInv(player, clicked);
+                                }
+                            }
+                        } else if (inventory.getName().equals(method.getAnimalInv(player, clicked).getName())) {
+                            event.setCancelled(true);
+                            if (clicked.getType().equals(Material.PAPER)) {
+                                method.teleportAnimalToPlayer(player, clicked);
+                            } else if (clicked.getType().equals(Material.NETHER_STAR)) {
+                                method.freezeAnimal(clicked, player);
+                            } else if (clicked.getType().equals(Material.BOOK_AND_QUILL)) {
+                                method.openModifyInv(player, clicked);
+                            } else if (clicked.getType().equals(Material.RAW_FISH)
+                                    || clicked.getType().equals(Material.APPLE)
+                                    || clicked.getType().equals(Material.BONE)) {
+                                method.tameAnimal(clicked, player);
                                 method.openAnimalInv(player, clicked);
+                            } else if (clicked.getType().equals(Material.WHEAT)) {
+                                method.resetSheepFur(clicked, world);
+                            } else if (clicked.getType().equals(Material.EMPTY_MAP)) {
+                                method.teleportAnimalHome(player, clicked);
+                            } else if (clicked.getType().equals(Material.MAP)) {
+                                method.teleportPlayerToAnimal(player, clicked);
                             }
-                        }
-                    } else if (inventory.getName().equals(method.getAnimalInv(player, clicked).getName())) {
-                        event.setCancelled(true);
-                        if (clicked.getType().equals(Material.PAPER)) {
-                            method.teleportAnimalToPlayer(player, clicked);
-                        } else if (clicked.getType().equals(Material.NETHER_STAR)) {
-                            method.freezeAnimal(clicked, player);
-                        } else if (clicked.getType().equals(Material.BOOK_AND_QUILL)) {
-                            method.openModifyInv(player, clicked);
-                        } else if (clicked.getType().equals(Material.RAW_FISH)
-                                || clicked.getType().equals(Material.APPLE)
-                                || clicked.getType().equals(Material.BONE)) {
-                            method.tameAnimal(clicked, player);
-                            method.openAnimalInv(player, clicked);
-                        } else if (clicked.getType().equals(Material.WHEAT)) {
-                            method.resetSheepFur(clicked, world);
-                        } else if (clicked.getType().equals(Material.EMPTY_MAP)) {
-                            method.teleportAnimalHome(player, clicked);
-                        } else if (clicked.getType().equals(Material.MAP)) {
-                            method.teleportPlayerToAnimal(player, clicked);
-                        }
-                    } else if (inventory.getName().equals(method.getModifyInv(player, clicked).getName())) {
-                        event.setCancelled(true);
-                        if (clicked.getType().equals(Material.MAGMA_CREAM)) {
-                            if (method.getAnimalFromItem(clicked, world) instanceof Ocelot) {
-                                method.setOcelotType(clicked, player);
-                            } else if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
-                                method.setHorseVariant(clicked, player);
+                        } else if (inventory.getName().equals(method.getModifyInv(player, clicked).getName())) {
+                            event.setCancelled(true);
+                            if (clicked.getType().equals(Material.MAGMA_CREAM)) {
+                                if (method.getAnimalFromItem(clicked, world) instanceof Ocelot) {
+                                    method.setOcelotType(clicked, player);
+                                } else if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
+                                    method.setHorseVariant(clicked, player);
+                                }
+                            } else if (clicked.getType().equals(Material.BLAZE_POWDER)) {
+                                if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
+                                    method.setHorseStyle(clicked, player);
+                                }
+                            } else if (clicked.getType().equals(Material.CLAY_BALL)) {
+                                if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
+                                    method.setHorseColor(clicked, player);
+                                }
+                            } else if (clicked.getType().equals(Material.INK_SACK)) {
+                                method.colorAnimal(clicked, player, method.getColorFromString(clicked));
                             }
-                        } else if (clicked.getType().equals(Material.BLAZE_POWDER)) {
-                            if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
-                                method.setHorseStyle(clicked, player);
-                            }
-                        } else if (clicked.getType().equals(Material.CLAY_BALL)) {
-                            if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
-                                method.setHorseColor(clicked, player);
-                            }
-                        } else if (clicked.getType().equals(Material.INK_SACK)) {
-                            method.colorAnimal(clicked, player, method.getColorFromString(clicked));
                         }
                     }
                 }
@@ -298,12 +308,14 @@ public class FarmHandler implements Listener {
         Player player = event.getPlayer();
         if (cmd.startsWith("/farm")) {
             if (config.getFav().getBoolean("CommandCooldown.Enabled")) {
-                if (!method.isDelayedCommand(player)) {
-                    method.delayCommand(player, config.getFav().getLong("CommandCooldown.Time"));
-                } else {
-                    player.sendMessage(ChatColor.DARK_AQUA + "On Cooldown For " + ChatColor.GOLD + method.getDelayedLeft(player)
-                            + ChatColor.DARK_AQUA + " More Seconds");
-                    event.setCancelled(true);
+                if (!player.hasPermission(FarmPermissions.BYPASS_FARM_COMMAND_COOLDOWN.toString())) {
+                    if (!method.isDelayedCommand(player)) {
+                        method.delayCommand(player, config.getFav().getLong("CommandCooldown.Time"));
+                    } else {
+                        player.sendMessage(ChatColor.DARK_AQUA + "On Cooldown For " + ChatColor.GOLD + method.getDelayedLeft(player)
+                                + ChatColor.DARK_AQUA + " More Seconds");
+                        event.setCancelled(true);
+                    }
                 }
             }
         }

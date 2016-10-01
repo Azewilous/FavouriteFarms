@@ -4,7 +4,6 @@ import io.github.favfarms.FavFarms;
 import io.github.favfarms.configuration.FarmText;
 import io.github.favfarms.farm.FarmMethods;
 import io.github.favfarms.permission.FarmPermissions;
-import io.github.favfarms.select.SelectionTool;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -25,7 +24,6 @@ public class FarmExecutor implements CommandExecutor {
 
     private FarmText text = FarmText.getInstance();
     private FarmMethods method = FarmMethods.getInstance();
-    private SelectionTool tool = SelectionTool.getInstance();
 
     @SuppressWarnings("deprecation")
     @Override
@@ -52,6 +50,8 @@ public class FarmExecutor implements CommandExecutor {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
                                         + FarmPermissions.COMMAND_RELOAD.toString());
                             }
+                        } else if (args[0].equalsIgnoreCase("players")) {
+                            farms.getCount(player, "lobby");
                         } else if (args[0].equalsIgnoreCase("update")) {
                             if (player.isOp()) {
                                 FavFarms.update();
@@ -171,6 +171,22 @@ public class FarmExecutor implements CommandExecutor {
                             }
                         } else {
                             player.sendMessage(ChatColor.DARK_AQUA + "Not A Valid Farm Plugin Command");
+                        }
+                    } else if (args.length == 3) {
+                        if (args[0].equalsIgnoreCase("give")) {
+                            if (args[1].equalsIgnoreCase("reset")) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_OBTAIN_RESET.toString()) || player.isOp()) {
+                                    if (args[2] != null && farms.getServer().getPlayer(args[2]) != null) {
+                                        Player target = farms.getServer().getPlayer(args[2]);
+                                        method.giveCatcherResetItem(target);
+                                    } else {
+                                        player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
+                                    }
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_OBTAIN_RESET.toString());
+                                }
+                            }
                         }
                     }
                 }

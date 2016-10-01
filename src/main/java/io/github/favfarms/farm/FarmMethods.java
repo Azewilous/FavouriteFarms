@@ -97,12 +97,11 @@ public class FarmMethods {
             }
         }
         if (player.hasPermission(FarmPermissions.BYPASS_FARM_CREATE_COOLDOWN.toString()) || player.isOp()) {
-            recentCreate.put(player.getUniqueId(), 0L);
+            if (recentCreate.containsKey(player.getUniqueId())) {
+                recentCreate.remove(player.getUniqueId());
+            }
         }
         if (!recentCreate.containsKey(player.getUniqueId())) {
-            recentCreate.put(player.getUniqueId(), 0L);
-        }
-        if (recentCreate.get(player.getUniqueId()) == 0L) {
             if (!farmExist(farmName)) {
                 setID();
                 farm.createFarm(farmName, player.getUniqueId(), ID, blocks.get(player.getUniqueId()));
@@ -120,6 +119,10 @@ public class FarmMethods {
             } else {
                 player.sendMessage(ChatColor.DARK_AQUA + "This Farm Name Is Taken");
             }
+        } else {
+            long time = recentCreate.get(player.getUniqueId());
+            player.sendMessage(ChatColor.DARK_AQUA + "This Command Has" + ChatColor.GOLD + " (" + ChatColor.GOLD + time
+                    + ") " + ChatColor.DARK_AQUA + "Minute Cooldown");
         }
     }
 
@@ -232,12 +235,6 @@ public class FarmMethods {
     public void applyCooldown(final Player player) {
         final BukkitScheduler scheduler = FavFarms.getInstance().getServer().getScheduler();
         scheduler.scheduleSyncDelayedTask(FavFarms.getInstance(), () -> {
-            long time = recentCreate.get(player.getUniqueId());
-            if (time != 0L) {
-                time -= 1;
-                recentCreate.put(player.getUniqueId(), time);
-                player.sendMessage(ChatColor.DARK_AQUA + "This Command Is Still On Cooldown");
-            }
             player.sendMessage(ChatColor.DARK_AQUA + "You Can Now Create A Farm Again");
             recentCreate.remove(player.getUniqueId());
         }, (20 * 60) * recentCreate.get(player.getUniqueId()));
@@ -838,9 +835,11 @@ public class FarmMethods {
     }
 
     public Inventory getAnimalInv(Player player, ItemStack item) {
-        Animals animal = (Animals) getAnimalFromItem(item, player.getWorld());
-
-        return FarmInventory.getInstance().createAnimalInventory(player, animal);
+        if (item != null) {
+            Animals animal = (Animals) getAnimalFromItem(item, player.getWorld());
+            return FarmInventory.getInstance().createAnimalInventory(player, animal);
+        }
+        return null;
     }
 
     public void openAnimalInv(Player player, ItemStack item) {
@@ -848,9 +847,11 @@ public class FarmMethods {
     }
 
     public Inventory getModifyInv(Player player, ItemStack item) {
-        Animals animal = (Animals) getAnimalFromItem(item, player.getWorld());
-
-        return FarmInventory.getInstance().createModificationInventory(player, animal);
+        if (item != null) {
+            Animals animal = (Animals) getAnimalFromItem(item, player.getWorld());
+            return FarmInventory.getInstance().createModificationInventory(player, animal);
+        }
+        return null;
     }
 
     public void openModifyInv(Player player, ItemStack item) {
@@ -982,6 +983,9 @@ public class FarmMethods {
 
     public void giveCatcher(Player player) {
         Long time = config.getFav().getLong("Delays.CatcherCooldown");
+        if (player.hasPermission(FarmPermissions.BYPASS_FARM_CATCHER_COOLDOWN.toString())) {
+            catcherObtain.remove(player.getUniqueId());
+        }
         if (!catcherObtain.containsKey(player.getUniqueId())) {
             Inventory inv = player.getInventory();
             if (hasEmptySlots(inv)) {
@@ -992,7 +996,7 @@ public class FarmMethods {
                 applyCatcherCooldown(player, catcherObtain.get(player.getUniqueId()));
             }
         } else {
-            player.sendMessage(ChatColor.DARK_AQUA + "This Command Has" + ChatColor.GOLD + " (" + ChatColor.GOLD + time
+            player.sendMessage(ChatColor.DARK_AQUA + "This Command Has A" + ChatColor.GOLD + " (" + ChatColor.GOLD + time
                     + ") " + ChatColor.DARK_AQUA + "Minute Cooldown");
         }
     }
@@ -1008,6 +1012,24 @@ public class FarmMethods {
         }.runTaskLater(FavFarms.getInstance(), 20 * (time * 60));
     }
 
+    public void giveCatcherResetItem(Player player) {
+        Inventory inv = player.getInventory();
+        if (hasEmptySlots(inv)) {
+            inv.setItem(getEmptySlots(inv).get(0), sel.getResetCatcherItem());
+        }
+    }
+
+    public void removeCatcherCooldown(Player player) {
+        if (catcherObtain.containsKey(player.getUniqueId())) {
+            catcherObtain.remove(player.getUniqueId());
+            player.getInventory().remove(sel.getResetCatcherItem());
+            player.sendMessage(ChatColor.DARK_AQUA + "Your Cooldown For Receiving Catchers Has Been Removed");
+        } else {
+            player.sendMessage(ChatColor.DARK_AQUA + "You Cannot Use This Item If You Don't Have A Cooldown " +
+                    "For Receiving Catchers");
+        }
+    }
+
     public Entity getAnimalFromItem(ItemStack item, World world) {
         ItemMeta meta = item.getItemMeta();
         UUID uuid = null;
@@ -1016,7 +1038,14 @@ public class FarmMethods {
                 uuid = UUID.fromString(id.substring(8));
             }
         }
-        return getAnimalFromUUID(uuid, world);
+        if (uuid != null) {
+            return getAnimalFromUUID(uuid, world);
+        }
+        return null;
+    }
+
+    public boolean isAnimalInvItem(Player player, ItemStack item) {
+        return getAnimalFromItem(item, player.getWorld()) != null;
     }
 
     public void teleportPlayerToAnimal(Player player, ItemStack item) {
