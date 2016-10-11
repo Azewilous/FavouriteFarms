@@ -12,14 +12,20 @@ Selector:
   Material: "BLAZE_ROD"
   DisplayName: '&6Farm Selector'
 Delays:
-#How Long Until A Player Can Create Another Farm In Minutes
-  FarmCreation: 1
-#How Long Until A Player Can Recieve More Catchers In Minutes
-  CatcherCooldown: 1
-#If A Farm Commands Have A Cooldown And For How Long In seconds
+#How Long Until A Player Can Create Another Farm In Seconds
+  FarmCreation: 60
+#How Long Until A Player Can Recieve More Catchers In Seconds
+  CatcherCooldown: 60
+#How Long A Player Has Received An Increase Catch Rate in Seconds
+  IncreasedRateTime: 60
+#If A Farm Commands Have A Cooldown And For How Long In Seconds
   CommandCooldown:
     Enabled: true
     Time: 3
+#Player Enhancemnts
+Enhancement:
+#Catch Rate Will Be Turned To A Percentage Don't Add A '%' Sign After Number
+  CatchRateIncrease: 25
 #Blocks A Player Starts With and Increases By Per Level
 Size:
 #Amount Of Blocks A Player Starts With
@@ -27,6 +33,14 @@ Size:
 #Increment Amount Per Level
   Increment: 10
 #Catch Rate For Animals
+#Defualt Farm Animal Type/Style Change Usages A Player Starts With
+Usages:
+#Defualt Amount Of Tames A Player Receives
+  Tame: 2
+#Defualt Amount Of Sheep Fur Reset Usages A Player Receives
+  FurReset: 3
+#Defualt Amount Of Ocelot/Horse Style Change Usages A Player Receives
+  StyleSets: 4
 CatchRate:
   Chicken: 78.6
   Cow: 64.6

@@ -1,4 +1,4 @@
-package io.github.favfarms.listener;
+package io.github.favfarms.executor;
 
 import io.github.favfarms.FavFarms;
 import io.github.favfarms.configuration.FarmText;
@@ -50,8 +50,6 @@ public class FarmExecutor implements CommandExecutor {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
                                         + FarmPermissions.COMMAND_RELOAD.toString());
                             }
-                        } else if (args[0].equalsIgnoreCase("players")) {
-                            farms.getCount(player, "lobby");
                         } else if (args[0].equalsIgnoreCase("update")) {
                             if (player.isOp()) {
                                 FavFarms.update();
@@ -185,6 +183,139 @@ public class FarmExecutor implements CommandExecutor {
                                 } else {
                                     player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
                                             + FarmPermissions.COMMAND_OBTAIN_RESET.toString());
+                                }
+                            } else if (args[1].equalsIgnoreCase("catcher")) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_OBTAIN_CATCHER_OTHER.toString()) || player.isOp()) {
+                                    if (args[2] != null && farms.getServer().getPlayer(args[2]) != null) {
+                                        Player target = farms.getServer().getPlayer(args[2]);
+                                        method.giveCatcher(player, target);
+                                    } else {
+                                        player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
+                                    }
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_OBTAIN_CATCHER_OTHER.toString());
+                                }
+                            } else if (args[1].equalsIgnoreCase("increase")) {
+                                if (args[2] != null && farms.getServer().getPlayer(args[2]) != null) {
+                                    Player target = farms.getServer().getPlayer(args[2]);
+                                    method.giveChanceModifierItem(target);
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
+                                }
+                            }
+                        }
+                    } else if(args.length == 4) {
+                        if (args[0].equalsIgnoreCase("set")) {
+                            if (args[1].equalsIgnoreCase("tames")) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_SET_TAMES.toString()) || player.isOp()) {
+                                    if (args[2] != null && farms.getServer().getPlayer(args[2]) != null) {
+                                        Player target = farms.getServer().getPlayer(args[2]);
+                                        if (args[3] != null && method.isNumeric(args[3])) {
+                                            Integer amount = Integer.parseInt(args[3]);
+                                            method.setTameUsages(target, amount);
+                                        } else {
+                                            player.sendMessage(ChatColor.DARK_AQUA + "The Numbers Cannot Be Null And Must " +
+                                                    "Be An Integer");
+                                        }
+                                    } else {
+                                        player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
+                                    }
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_SET_TAMES.toString());
+                                }
+                            } else if (args[1].equalsIgnoreCase("replenishes")) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_SET_REPLENISHES.toString()) || player.isOp()) {
+                                    if (args[2] != null && farms.getServer().getPlayer(args[2]) != null) {
+                                        Player target = farms.getServer().getPlayer(args[2]);
+                                        if (args[3] != null && method.isNumeric(args[3])) {
+                                            Integer amount = Integer.parseInt(args[3]);
+                                            method.setReplenishUsages(target, amount);
+                                        } else {
+                                            player.sendMessage(ChatColor.DARK_AQUA + "The Numbers Cannot Be Null And Must " +
+                                                    "Be An Integer");
+                                        }
+                                    } else {
+                                        player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
+                                    }
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_SET_REPLENISHES.toString());
+                                }
+                            } else if (args[1].equalsIgnoreCase("stylechanges")) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_SET_STYLECHANGES.toString()) || player.isOp()) {
+                                    if (args[2] != null && farms.getServer().getPlayer(args[2]) != null) {
+                                        Player target = farms.getServer().getPlayer(args[2]);
+                                        if (args[3] != null && method.isNumeric(args[3])) {
+                                            Integer amount = Integer.parseInt(args[3]);
+                                            method.setStyleChangeUsages(target, amount);
+                                        } else {
+                                            player.sendMessage(ChatColor.DARK_AQUA + "The Numbers Cannot Be Null And Must " +
+                                                    "Be An Integer");
+                                        }
+                                    } else {
+                                        player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
+                                    }
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_SET_STYLECHANGES.toString());
+                                }
+                            }
+                        } else if (args[0].equalsIgnoreCase("add")) {
+                            if (args[1].equalsIgnoreCase("tames")) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_ADD_TAMES.toString()) || player.isOp()) {
+                                    if (args[2] != null && farms.getServer().getPlayer(args[2]) != null) {
+                                        Player target = farms.getServer().getPlayer(args[2]);
+                                        if (args[3] != null && method.isNumeric(args[3])) {
+                                            Integer amount = Integer.parseInt(args[3]);
+                                            method.addTameUsages(target, amount);
+                                        } else {
+                                            player.sendMessage(ChatColor.DARK_AQUA + "The Numbers Cannot Be Null And Must " +
+                                                    "Be An Integer");
+                                        }
+                                    } else {
+                                        player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
+                                    }
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_ADD_TAMES.toString());
+                                }
+                            } else if (args[1].equalsIgnoreCase("replenishes")) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_ADD_REPLENISHES.toString()) || player.isOp()) {
+                                    if (args[2] != null && farms.getServer().getPlayer(args[2]) != null) {
+                                        Player target = farms.getServer().getPlayer(args[2]);
+                                        if (args[3] != null && method.isNumeric(args[3])) {
+                                            Integer amount = Integer.parseInt(args[3]);
+                                            method.addReplenishUsage(target, amount);
+                                        } else {
+                                            player.sendMessage(ChatColor.DARK_AQUA + "The Numbers Cannot Be Null And Must " +
+                                                    "Be An Integer");
+                                        }
+                                    } else {
+                                        player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
+                                    }
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_ADD_REPLENISHES.toString());
+                                }
+                            } else if (args[1].equalsIgnoreCase("stylechange")) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_ADD_STYLECHANGES.toString()) || player.isOp()) {
+                                    if (args[2] != null && farms.getServer().getPlayer(args[2]) != null) {
+                                        Player target = farms.getServer().getPlayer(args[2]);
+                                        if (args[3] != null && method.isNumeric(args[3])) {
+                                            Integer amount = Integer.parseInt(args[3]);
+                                            method.addStyleChangeUsage(target, amount);
+                                        } else {
+                                            player.sendMessage(ChatColor.DARK_AQUA + "The Numbers Cannot Be Null And Must " +
+                                                    "Be An Integer");
+                                        }
+                                    } else {
+                                        player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
+                                    }
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_ADD_STYLECHANGES.toString());
                                 }
                             }
                         }

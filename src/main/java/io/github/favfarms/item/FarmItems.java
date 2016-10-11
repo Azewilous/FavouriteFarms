@@ -1,5 +1,6 @@
 package io.github.favfarms.item;
 
+import io.github.favfarms.configuration.FarmConfig;
 import io.github.favfarms.farm.FarmMethods;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -25,6 +26,9 @@ public class FarmItems {
     public static FarmItems getInstance() {
         return instance;
     }
+
+    FarmConfig config = FarmConfig.getInstance();
+    FarmMethods method = FarmMethods.getInstance();
 
     public ItemStack createEgg(Animals animal) {
         ItemStack egg = new ItemStack(Material.MONSTER_EGG, 1);
@@ -261,7 +265,7 @@ public class FarmItems {
     }
 
     public ItemStack createReturnItem(Animals animal) {
-        ItemStack back = new ItemStack(Material.STAINED_CLAY, 1 ,(short) 14);
+        ItemStack back = new ItemStack(Material.STAINED_CLAY, 1, (short)14);
         ItemMeta backMeta = back.getItemMeta();
         backMeta.setDisplayName(ChatColor.RED + "Return To Farm Inventory");
         List<String> lore = new ArrayList<>();
@@ -269,6 +273,61 @@ public class FarmItems {
         backMeta.setLore(lore);
         back.setItemMeta(backMeta);
         return back;
+    }
+
+    public ItemStack createChanceModifier(Player player) {
+        Long remaining = config.getFav().getLong("Delays.IncreasedRateTime");
+        int percentage = config.getFav().getInt("Enhancement.CatchRateIncrease");
+        String time = remaining + " Minutes";
+        String percent = percentage + "% Increase";
+        ItemStack increase = new ItemStack(Material.PRISMARINE_SHARD, 1);
+        ItemMeta increaseMeta = increase.getItemMeta();
+        increaseMeta.setDisplayName(ChatColor.BLUE + "" + ChatColor.BOLD + "Increase Catch Rate");
+        List<String> lore = new ArrayList<>();
+        lore.add(ChatColor.DARK_AQUA + percent);
+        lore.add(ChatColor.DARK_AQUA + time);
+        lore.add(ChatColor.GRAY + "" + ChatColor.MAGIC + player.getUniqueId());
+        increaseMeta.setLore(lore);
+        increase.setItemMeta(increaseMeta);
+        return increase;
+    }
+
+    public ItemStack createResetCatcherCooldown() {
+        ItemStack reset = new ItemStack(Material.WATCH, 1);
+        ItemMeta resetMeta = reset.getItemMeta();
+        resetMeta.setDisplayName(ChatColor.BLACK  + "" + ChatColor.MAGIC + "Catcher Cooldown Reset");
+        List<String> lore = new ArrayList<>();
+        lore.add(ChatColor.GREEN + "Reset Catcher Cooldown");
+        resetMeta.setLore(lore);
+        reset.setItemMeta(resetMeta);
+        return reset;
+    }
+
+    public ItemStack createTameUsages(Player player) {
+        ItemStack usage = new ItemStack(Material.GHAST_TEAR, 1);
+        ItemMeta usageMeta = usage.getItemMeta();
+        Integer amount = method.getTameUsages(player);
+        usageMeta.setDisplayName(ChatColor.GOLD + "(" + amount + ") " + ChatColor.GREEN + "Tame Usages");
+        usage.setItemMeta(usageMeta);
+        return usage;
+    }
+
+    public ItemStack createFurResetUsages(Player player) {
+        ItemStack usage = new ItemStack(Material.GHAST_TEAR, 1);
+        ItemMeta usageMeta = usage.getItemMeta();
+        Integer amount = method.getReplenishUsage(player);
+        usageMeta.setDisplayName(ChatColor.GOLD + "(" + amount + ") " + ChatColor.GREEN + "Fur Reset Usages");
+        usage.setItemMeta(usageMeta);
+        return usage;
+    }
+
+    public ItemStack createStyleSetUsages(Player player) {
+        ItemStack usage = new ItemStack(Material.GHAST_TEAR, 1);
+        ItemMeta usageMeta = usage.getItemMeta();
+        Integer amount = method.getStyleChangeUsage(player);
+        usageMeta.setDisplayName(ChatColor.GOLD + "(" + amount + ") " + ChatColor.GREEN + "Style Set Usages");
+        usage.setItemMeta(usageMeta);
+        return usage;
     }
 
     @SuppressWarnings("deprecation")

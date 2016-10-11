@@ -1,10 +1,8 @@
 package io.github.favfarms;
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import io.github.favfarms.configuration.FarmConfig;
+import io.github.favfarms.executor.FarmExecutor;
 import io.github.favfarms.farm.FarmMethods;
-import io.github.favfarms.listener.FarmExecutor;
 import io.github.favfarms.listener.FarmHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -50,20 +48,6 @@ public class FavFarms extends JavaPlugin {
         instance = null;
     }
 
-    public void getCount(Player player, String server) {
-
-        if (server == null) {
-            server = "ALL";
-        }
-
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("PlayerCount");
-        out.writeUTF(server);
-
-        player.sendPluginMessage(this, "BungeeCord", out.toByteArray());
-
-    }
-
     public static Plugin getInstance() {
         if (instance == null) {
             instance = Bukkit.getServer().getPluginManager().getPlugin("FavouriteFarms");
@@ -77,6 +61,7 @@ public class FavFarms extends JavaPlugin {
             method.saveFarmLevel(player);
             method.saveFarmExp(player);
         }
+        method.saveSavTimers();
     }
 
     public void safeLoadFile() {
@@ -85,6 +70,7 @@ public class FavFarms extends JavaPlugin {
             method.loadFarmLevel(player);
             method.loadFarmExp(player);
         }
+        method.loadSavTimers();
     }
 
     public void setupConfigs() {
@@ -94,7 +80,7 @@ public class FavFarms extends JavaPlugin {
         fc.saveDefaultFarms();
         fc.saveDefaultAnimals();
         fc.saveDefaultPlayerData();
-
+        fc.saveDefaultSavTimers();
     }
 
     public void saveConfigs() {
@@ -104,6 +90,7 @@ public class FavFarms extends JavaPlugin {
         fc.saveFarms();
         fc.saveAnimals();
         fc.savePlayerData();
+        fc.saveSavTimers();
     }
 
     public static void update() {

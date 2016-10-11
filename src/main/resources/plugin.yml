@@ -30,11 +30,11 @@ permissions:
     description: Access To Highlight Farm Area For Player
   favfarms.show.other:
     description: Access To See Another Players Farm Area
-  favfarms.farms.create:
+  favfarms.farm.create:
     description: Access To Create A Farm
   favfarms.create.other:
     description: Access To Create A Farm For Another Player
-  favfarms.farms.remove:
+  favfarms.farm.remove:
     description: Access To Remove A Farm
   favfarms.info.self:
     description: Access To Get Farm Info For Self
@@ -52,11 +52,31 @@ permissions:
     description: Open Farm Invneotry Of Others
   favfarms.farm.animals:
     description: Access To See Animals A Player Owns
+  favfarms.set.tames:
+    description: Access To Set Amount Of Tames A Player Has
+  favfarms.set.replenished:
+    description: Access To Set Amount Of Replenishes A Player Has
+  favfarms.set.stylechanges:
+    description: Access To Set Amount Of StyleChanges A Player Has
+  favfarms.add.tames:
+    description: Access To Add To The Amount Of Tames A Player Has
+  favfarms.add.replenishes:
+    description: Access To Add To The Amount Of Replenishes A Player Has
+  favfarms.add.stylechanges:
+    description: Access To Add To The Amount Of StyleChanges A Player Has
   favfarms.bypass.area:
     description: Access To Create Farm On Top of Claims/Regions
-  favfarms.farms.multiple:
+  favfarms.bypass.size.limit:
+    description: Access To Bypass The Farm Size Limit For All Levels
+  favfarms.bypass.create.cooldown:
+    description: Access To Bypass The Farm Creation Cooldown
+  favfarms.bypass.catcher.cooldown:
+    description: Access To Bypass The Farm Catcher Obtain Cooldown
+  favfarms.bypass.command.cooldown:
+    description: Access To Bypass The Command Use Cooldown
+  favfarms.farm.multiple:
     description: Access To Use Multiple Farms Command
-  favfarms.farms.multiple.:
+  favfarms.farm.multiple.:
     description: Amount Of Farms A Player Can Have
   favfarms.farm.multiple.unlimited:
     description: Access To Create An Unlimited Amount Of Farms

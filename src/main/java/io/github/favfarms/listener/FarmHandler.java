@@ -5,6 +5,7 @@ import com.sk89q.worldedit.bukkit.selections.Selection;
 import io.github.favfarms.FavFarms;
 import io.github.favfarms.configuration.FarmConfig;
 import io.github.favfarms.farm.FarmMethods;
+import io.github.favfarms.item.FarmItems;
 import io.github.favfarms.permission.FarmPermissions;
 import io.github.favfarms.select.SelectionTool;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
@@ -21,7 +22,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
@@ -47,6 +47,7 @@ public class FarmHandler implements Listener {
 
     FarmMethods method = FarmMethods.getInstance();
     SelectionTool tool = SelectionTool.getInstance();
+    FarmItems FItems = FarmItems.getInstance();
     FarmConfig config = FarmConfig.getInstance();
 
     HashMap<Player, Location> blockLocFirst = new HashMap<>();
@@ -54,24 +55,33 @@ public class FarmHandler implements Listener {
     HashMap<Player, BlockVector> blockVecFirst = new HashMap<>();
     HashMap<Player, BlockVector> blockVecSecond = new HashMap<>();
 
+
     @SuppressWarnings("unused")
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         ItemStack selTool = tool.getTool();
         ItemStack catchTool = tool.getCatcher();
-        ItemStack resetTool = tool.getResetCatcherItem();
+        ItemStack resetTool = FItems.createResetCatcherCooldown();
+        ItemStack increaseChanceItem = FItems.createChanceModifier(player);
         ItemStack item = event.getItem();
         if (item != null) {
             if (item.isSimilar(resetTool)) {
-                if (resetTool.getItemMeta().getDisplayName().equalsIgnoreCase(tool.getResetCatcherItem().getItemMeta().getDisplayName())) {
+                if (item.getItemMeta().getDisplayName().equalsIgnoreCase(resetTool.getItemMeta().getDisplayName())) {
                     if (event.getAction() == Action.RIGHT_CLICK_AIR) {
                         method.removeCatcherCooldown(player);
                     }
                 }
             }
+            if (item.isSimilar(increaseChanceItem)) {
+                if (item.getItemMeta().getDisplayName().equalsIgnoreCase(increaseChanceItem.getItemMeta().getDisplayName())) {
+                    if (event.getAction() == Action.RIGHT_CLICK_AIR) {
+                        method.increaseCatchRate(player, item);
+                    }
+                }
+            }
             if (item.isSimilar(catchTool)) {
-                if (catchTool.getItemMeta().getDisplayName().equalsIgnoreCase(tool.getCatcher().getItemMeta().getDisplayName())) {
+                if (item.getItemMeta().getDisplayName().equalsIgnoreCase(tool.getCatcher().getItemMeta().getDisplayName())) {
                     if (event.getAction() == Action.RIGHT_CLICK_AIR) {
                         method.capture.add(player);
                     }
@@ -110,7 +120,7 @@ public class FarmHandler implements Listener {
                     if (item.hasItemMeta()) {
                         if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
                             if (player.hasPermission(FarmPermissions.COMMAND_START_FARM.toString()) || player.isOp()) {
-                                if (method.count == 0) {
+                                if (method.getCount(player) == 0) {
                                     World world = event.getClickedBlock().getLocation().getWorld();
                                     double x = event.getClickedBlock().getLocation().getBlockX();
                                     double y = event.getClickedBlock().getLocation().getBlockY();
@@ -119,9 +129,9 @@ public class FarmHandler implements Listener {
                                     blockVecFirst.put(player, new BlockVector(x, y, z));
                                     player.sendMessage(ChatColor.BLUE + "Selected First Block @ " + "x:" + x + " y:" + y
                                             + " z:" + z);
-                                    method.count++;
+                                    method.addCount(player, 1);
                                     player.sendMessage(ChatColor.AQUA + "Left Click Another Block");
-                                } else if (method.count == 1) {
+                                } else if (method.getCount(player) == 1) {
                                     World world = event.getClickedBlock().getLocation().getWorld();
                                     double x = event.getClickedBlock().getLocation().getBlockX();
                                     double y = event.getClickedBlock().getLocation().getBlockY();
@@ -134,12 +144,12 @@ public class FarmHandler implements Listener {
                                     if (method.isValidFarmSize(player)) {
                                         if (method.isValidFarmLocation(player, blockVecFirst.get(player)
                                                 , blockVecSecond.get(player))) {
-                                            method.count--;
+                                            method.subtractCount(player, 1);
                                         }
                                     }
                                 }
                             } else {
-                                player.sendMessage(ChatColor.DARK_AQUA + "No Permission To Use");
+                                player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have Permission To Use This Item");
                             }
                         }
                     }
@@ -147,6 +157,7 @@ public class FarmHandler implements Listener {
             }
         }
     }
+
 
     @SuppressWarnings("unused")
     @EventHandler
@@ -176,6 +187,7 @@ public class FarmHandler implements Listener {
         }
     }
 
+    /*
     @SuppressWarnings("unused")
     @EventHandler
     public void interactEntityEvent (PlayerInteractEntityEvent event) {
@@ -190,6 +202,7 @@ public class FarmHandler implements Listener {
             }
         }
     }
+    */
 
     @SuppressWarnings("unused")
     @EventHandler
@@ -217,7 +230,7 @@ public class FarmHandler implements Listener {
             if (clicked.hasItemMeta()) {
                 if (clicked.getItemMeta().hasLore()) {
                     if (method.isAnimalInvItem(player, clicked)) {
-                        if (clicked.getType().equals(Material.STAINED_CLAY)) {
+                        if (clicked.isSimilar(FItems.createReturnItem((Animals) method.getAnimalFromItem(clicked, world)))) {
                             if (inventory.getName().equals(FarmMethods.getInstance().getAnimalInv(player, clicked).getName())) {
                                 method.openFarmInv(player);
                             } else if (inventory.getName().equals(FarmMethods.getInstance().getModifyInv(player, clicked).getName())) {
@@ -226,49 +239,84 @@ public class FarmHandler implements Listener {
                         }
                         if (inventory.getName().equals(method.getFarmInv(player).getName())) {
                             event.setCancelled(true);
-                            if (clicked.getType() == Material.MONSTER_EGG) {
-                                if (method.isFarmEgg(clicked)) {
-                                    method.openAnimalInv(player, clicked);
-                                }
+                            if (clicked.isSimilar(FItems.createEgg((Animals) method.getAnimalFromItem(clicked, world)))) {
+                                method.openAnimalInv(player, clicked);
                             }
                         } else if (inventory.getName().equals(method.getAnimalInv(player, clicked).getName())) {
                             event.setCancelled(true);
-                            if (clicked.getType().equals(Material.PAPER)) {
+                            //Teleports Animal To Player
+                            if (clicked.isSimilar(FItems.createTeleportHereItem((Animals)
+                                    method.getAnimalFromItem(clicked, world)))) {
                                 method.teleportAnimalToPlayer(player, clicked);
-                            } else if (clicked.getType().equals(Material.NETHER_STAR)) {
+
+                            }
+                            //Disables Animals AI
+                            if (clicked.isSimilar(FItems.createFreezeAnimalItem((Animals)
+                                    method.getAnimalFromItem(clicked, world)))) {
                                 method.freezeAnimal(clicked, player);
-                            } else if (clicked.getType().equals(Material.BOOK_AND_QUILL)) {
+                            }
+                            //Opens The Animals Modification Inventory
+                            if (clicked.isSimilar(FItems.createModificationItem((Animals)
+                                    method.getAnimalFromItem(clicked, world)))) {
                                 method.openModifyInv(player, clicked);
-                            } else if (clicked.getType().equals(Material.RAW_FISH)
-                                    || clicked.getType().equals(Material.APPLE)
-                                    || clicked.getType().equals(Material.BONE)) {
-                                method.tameAnimal(clicked, player);
-                                method.openAnimalInv(player, clicked);
-                            } else if (clicked.getType().equals(Material.WHEAT)) {
-                                method.resetSheepFur(clicked, world);
-                            } else if (clicked.getType().equals(Material.EMPTY_MAP)) {
+                            }
+                            //Tames An Animal
+                            if (clicked.isSimilar(FItems.createTameItem((Animals)
+                                    method.getAnimalFromItem(clicked, world)))) {
+                                if (method.hasTameUsages(player)) {
+                                    method.tameAnimal(clicked, player);
+                                    method.openAnimalInv(player, clicked);
+                                }
+                            }
+                            //Replenishes A Sheep's Fur
+                            if (clicked.isSimilar(FItems.createSheepFurReset((Animals)
+                                    method.getAnimalFromItem(clicked, world)))) {
+                                if (method.hasReplenishUsages(player)) {
+                                    method.resetSheepFur(clicked, world);
+                                }
+                            }
+                            //Teleports An Animal Home IE. Player Spawn
+                            if (clicked.isSimilar(FItems.createHomeItem((Animals)
+                                    method.getAnimalFromItem(clicked, world)))) {
                                 method.teleportAnimalHome(player, clicked);
-                            } else if (clicked.getType().equals(Material.MAP)) {
+                            }
+                            //Teleports Player To An Animal
+                            if (clicked.isSimilar(FItems.createTeleportToItem((Animals)
+                                    method.getAnimalFromItem(clicked, world)))) {
                                 method.teleportPlayerToAnimal(player, clicked);
                             }
                         } else if (inventory.getName().equals(method.getModifyInv(player, clicked).getName())) {
                             event.setCancelled(true);
-                            if (clicked.getType().equals(Material.MAGMA_CREAM)) {
-                                if (method.getAnimalFromItem(clicked, world) instanceof Ocelot) {
-                                    method.setOcelotType(clicked, player);
-                                } else if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
-                                    method.setHorseVariant(clicked, player);
+                            if (method.hasStyleChangeUsages(player)) {
+                                //Looks Confusing, It Just Runs A Lot Of Checks To Prevent Bugs
+                                if (clicked.isSimilar(FItems.createOcelotChangeItem((Animals)
+                                        method.getAnimalFromItem(clicked, world), method.getOcelotTypeFromString(clicked)))
+                                        || clicked.isSimilar(FItems.createHorseChangeItem((Animals)
+                                        method.getAnimalFromItem(clicked, world), method.getHorseVariantFromString(clicked)))) {
+                                    if (method.getAnimalFromItem(clicked, world) instanceof Ocelot) {
+                                        method.setOcelotType(clicked, player);
+                                    } else if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
+                                        method.setHorseVariant(clicked, player);
+                                    }
                                 }
-                            } else if (clicked.getType().equals(Material.BLAZE_POWDER)) {
-                                if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
-                                    method.setHorseStyle(clicked, player);
+                                if (clicked.isSimilar(FItems.createHorseStyleItem((Animals)
+                                        method.getAnimalFromItem(clicked, world), method.getHorseStyleFromString(clicked)))) {
+                                    if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
+                                        method.setHorseStyle(clicked, player);
+                                    }
                                 }
-                            } else if (clicked.getType().equals(Material.CLAY_BALL)) {
-                                if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
-                                    method.setHorseColor(clicked, player);
+                                if (clicked.isSimilar(FItems.createHorseColorItem((Animals)
+                                        method.getAnimalFromItem(clicked, world), method.getHorseColorFromString(clicked)))) {
+                                    if (method.getAnimalFromItem(clicked, world) instanceof Horse) {
+                                        method.setHorseColor(clicked, player);
+                                    }
                                 }
-                            } else if (clicked.getType().equals(Material.INK_SACK)) {
-                                method.colorAnimal(clicked, player, method.getColorFromString(clicked));
+                                if (clicked.isSimilar(FItems.createAnimalColorItem((Animals)
+                                        method.getAnimalFromItem(clicked, world), method.getColorFromString(clicked)))) {
+                                    method.colorAnimal(clicked, player, method.getColorFromString(clicked));
+                                }
+                            } else {
+                                player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have Any Style Change Usages");
                             }
                         }
                     }

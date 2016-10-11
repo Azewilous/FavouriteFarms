@@ -34,6 +34,9 @@ public class FarmConfig {
     public static FileConfiguration playerData = null;
     public static File playerDataFile = null;
 
+    public static FileConfiguration savTimers = null;
+    public static File savTimersFile = null;
+
     //Farms
     public FileConfiguration getFarms() {
         if (farms == null) {
@@ -178,6 +181,41 @@ public class FarmConfig {
         }
         if (!playerDataFile.exists()) {
             FavFarms.getInstance().saveResource("playerdata.yml", false);
+        }
+    }
+
+    //Saving Timers
+    public FileConfiguration getSavTimers() {
+        if (savTimers == null) {
+            reloadSavTimers();
+        }
+        return savTimers;
+    }
+
+    public void saveSavTimers() {
+        if (savTimers != null && savTimersFile != null) {
+            try {
+                getSavTimers().save(savTimersFile);
+            } catch (Exception ex) {
+                Bukkit.getServer().getLogger().info(ChatColor.DARK_PURPLE + "Timer Data Could Not Be Saved "
+                        + ex);
+            }
+        }
+    }
+
+    public void reloadSavTimers() {
+        if (savTimersFile == null) {
+            savTimersFile = new File(FavFarms.getInstance().getDataFolder(), "sav.yml");
+        }
+        savTimers = YamlConfiguration.loadConfiguration(savTimersFile);
+    }
+
+    public void saveDefaultSavTimers() {
+        if (savTimersFile == null) {
+            savTimersFile = new File(FavFarms.getInstance().getDataFolder(), "sav.yml");
+        }
+        if (!savTimersFile.exists()) {
+            FavFarms.getInstance().saveResource("sav.yml", false);
         }
     }
 

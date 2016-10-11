@@ -44,18 +44,22 @@ public class FarmInventory {
             animalInv.setItem(8, FarmItems.getInstance().createReturnItem(animal));
             if (animal instanceof Sheep) {
                 animalInv.setItem(4, FarmItems.getInstance().createSheepFurReset(animal));
+                animalInv.setItem(1, FarmItems.getInstance().createFurResetUsages(player));
             }
 
             if (animal instanceof Ocelot) {
                 animalInv.setItem(4, FarmItems.getInstance().createTameItem(animal));
+                animalInv.setItem(1, FarmItems.getInstance().createTameUsages(player));
             }
 
             if (animal instanceof Horse) {
                 animalInv.setItem(4, FarmItems.getInstance().createTameItem(animal));
+                animalInv.setItem(1, FarmItems.getInstance().createTameUsages(player));
             }
 
             if (animal instanceof Wolf) {
                 animalInv.setItem(4, FarmItems.getInstance().createTameItem(animal));
+                animalInv.setItem(1, FarmItems.getInstance().createTameUsages(player));
             }
             return animalInv;
         }
@@ -67,6 +71,7 @@ public class FarmInventory {
         if (animal != null) {
             Inventory modifyInv = Bukkit.createInventory(player, 36, ChatColor.BLUE + "Customize " + animal.getName());
             modifyInv.setItem(8, FarmItems.getInstance().createReturnItem(animal));
+            modifyInv.setItem(15, FarmItems.getInstance().createStyleSetUsages(player));
             int count = 0;
             if (animal instanceof Ocelot) {
                 for (Ocelot.Type type : Ocelot.Type.values()) {
