@@ -45,6 +45,7 @@ public class FarmItems {
         lore.add(ChatColor.BLUE + "AgeLock: " + animal.getAgeLock());
         lore.add(ChatColor.BLUE + "Health: " + animal.getHealth());
         lore.add(ChatColor.BLUE + "Breedable: " + animal.canBreed());
+        lore.add(ChatColor.GRAY + "Home: " + animal.getMetadata("Home"));
         lore.add(ChatColor.GRAY + "UUID: " + animal.getUniqueId());
         eggMeta.setLore(lore);
         egg.setItemMeta(eggMeta);
@@ -328,6 +329,30 @@ public class FarmItems {
         usageMeta.setDisplayName(ChatColor.GOLD + "(" + amount + ") " + ChatColor.GREEN + "Style Set Usages");
         usage.setItemMeta(usageMeta);
         return usage;
+    }
+
+    public ItemStack createFarmsListItem(String name) {
+        ItemStack farmList = new ItemStack(Material.STAINED_GLASS, 1, (byte) 13);
+        ItemMeta farmListMeta = farmList.getItemMeta();
+        farmListMeta.setDisplayName(ChatColor.GREEN + "Farm " + name);
+        List<String> lore = new ArrayList<>();
+        String ownerID = config.getFarms().getString("Farms." + name + ".Creator"); //Testing
+        String world = config.getFarms().getString("Farms." + name + ".World");
+        int minX = config.getFarms().getInt("Farms." + name + ".Min.X");
+        int minY = config.getFarms().getInt("Farms." + name + ".Min.Y");
+        int minZ = config.getFarms().getInt("Farms." + name + ".Min.Z");
+        int maxX = config.getFarms().getInt("Farms." + name + ".Max.X");
+        int maxY = config.getFarms().getInt("Farms." + name + ".Max.Y");
+        int maxZ = config.getFarms().getInt("Farms." + name + ".Max.Z");
+        lore.add(ChatColor.BLUE + "Owner UUID: " + ownerID);
+        lore.add(ChatColor.BLUE + "Farm ID: " + config.getFarms().getInt("Farms." + name + ".ID"));
+        lore.add(ChatColor.BLUE + "Farm Size: " + config.getFarms().getString("Farms." + name + ".Size"));
+        lore.add(ChatColor.BLUE + "Farm World: " + world);
+        lore.add(ChatColor.BLUE + "Farm Min: " + "(" + minX + ", " + minY + ", " + minZ + ")");
+        lore.add(ChatColor.BLUE + "Farm Max: " + "(" + maxX + ", " + maxY + ", " + maxZ + ")");
+        farmListMeta.setLore(lore);
+        farmList.setItemMeta(farmListMeta);
+        return farmList;
     }
 
     @SuppressWarnings("deprecation")

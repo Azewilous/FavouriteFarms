@@ -172,14 +172,10 @@ public class FarmHandler implements Listener {
                     if (hitBySnowball.getType() == method.getEntityType(hitBySnowball)) {
                         Animals animal = (Animals) hitBySnowball;
                         if (method.hasFarm(player.getUniqueId())) {
-                            if (method.hasSpace(player.getUniqueId())) {
-                                event.setCancelled(true);
-                                method.addFarmAnimal(animal, player);
-                            } else {
-                                player.sendMessage(ChatColor.DARK_AQUA + "Your Farm Is Full");
-                            }
+                            event.setCancelled(true);
+                            method.addFarmAnimal(animal, player);
                         } else {
-                            player.sendMessage(ChatColor.DARK_AQUA + " You Do Now Own A Farm");
+                            player.sendMessage(ChatColor.DARK_AQUA + " You Do Not Own A Farm");
                         }
                     }
                 }
@@ -229,8 +225,15 @@ public class FarmHandler implements Listener {
         if (clicked != null) {
             if (clicked.hasItemMeta()) {
                 if (clicked.getItemMeta().hasLore()) {
+                    if (inventory.getName().equals(FarmMethods.getInstance().getPlayerFarmsInv(player).getName())) {
+                        event.setCancelled(true);
+                        if (clicked.isSimilar(FItems.createFarmsListItem(method.getFarmFromItem(clicked)))) {
+                            //TODO Something Later
+                        }
+                    }
                     if (method.isAnimalInvItem(player, clicked)) {
                         if (clicked.isSimilar(FItems.createReturnItem((Animals) method.getAnimalFromItem(clicked, world)))) {
+                            event.setCancelled(true);
                             if (inventory.getName().equals(FarmMethods.getInstance().getAnimalInv(player, clicked).getName())) {
                                 method.openFarmInv(player);
                             } else if (inventory.getName().equals(FarmMethods.getInstance().getModifyInv(player, clicked).getName())) {

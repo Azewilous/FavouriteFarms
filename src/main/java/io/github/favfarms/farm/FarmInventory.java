@@ -22,12 +22,22 @@ public class FarmInventory {
         return instance;
     }
 
+    public Inventory createFarmListInventory(Player player, List<String> farms) {
+        Inventory farmListInv = Bukkit.createInventory(player, 54, ChatColor.DARK_GRAY + player.getName() + " Farms");
+        int count = 0;
+        for (String str : farms) {
+            farmListInv.setItem(count, FarmMethods.getInstance().getItemForFarm(str));
+            count++;
+        }
+        return farmListInv;
+    }
+
     public Inventory createFarmInventory(Player player, List<Animals> animals) {
-        int count = -1;
+        int count = 0;
         Inventory farmInv = Bukkit.createInventory(player, 54, ChatColor.DARK_AQUA + player.getName() + "'s Farm");
         for (Animals animal : animals) {
-            count++;
             farmInv.setItem(count, FarmMethods.getInstance().getItemForAnimal(animal));
+            count++;
         }
         return farmInv;
     }
