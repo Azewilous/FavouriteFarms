@@ -92,7 +92,7 @@ public class FarmMethods {
     //End Of
     HashMap<UUID, Integer> blocks = new HashMap<>();
 
-    //Task
+    //Tasks
     HashMap<UUID, Integer> taskID_01 = new HashMap<>();
     HashMap<UUID, Integer> taskID_02 = new HashMap<>();
     HashMap<UUID, Integer> taskID_03 = new HashMap<>();
@@ -436,6 +436,10 @@ public class FarmMethods {
 
     public boolean isValidFarmLocation(Player player, BlockVector blockVecFirst, BlockVector blockVecSecond) {
         World world = player.getWorld();
+        if (intersectsWithFarm(blockVecFirst.toLocation(world), blockVecSecond.toLocation(world), player)) {
+            player.sendMessage(ChatColor.DARK_AQUA + "This Selection Overlaps Another Farm");
+            return false;
+        }
         if (!hasEntitiesInArea(player, blockVecFirst, blockVecSecond)) {
 
             Plugin pluginGP = getServer().getPluginManager().getPlugin("GriefPrevention");
@@ -714,22 +718,31 @@ public class FarmMethods {
         if (hasFarm(player.getUniqueId())) {
             if (checkPlayerInFarm(player)) {
                 World world = player.getWorld();
-                String name = getFarmForPlayer(player);
-                double x = player.getLocation().getX();
-                double y = player.getLocation().getY() + 2;
-                double z = player.getLocation().getZ();
-                config.getFarms().set("Farms." + name + ".World", world.getName());
-                config.getFarms().set("Farms." + name + ".Spawn.X", x);
-                config.getFarms().set("Farms." + name + ".Spawn.Y", y);
-                config.getFarms().set("Farms." + name + ".Spawn.Z", z);
-                config.saveFarms();
-                player.sendMessage(ChatColor.DARK_AQUA + "Farm Spawn Set At (X:" + x + ", Y: " + y + ", Z: " + z);
+                String name = getFarmFromLocation(player.getLocation());
+                player.sendMessage("Name: " + name);
+                if (player.getUniqueId().equals(getFarmOwner(name))) {
+                    double x = player.getLocation().getX();
+                    double y = player.getLocation().getY() + 2;
+                    double z = player.getLocation().getZ();
+                    config.getFarms().set("Farms." + name + ".World", world.getName());
+                    config.getFarms().set("Farms." + name + ".Spawn.X", x);
+                    config.getFarms().set("Farms." + name + ".Spawn.Y", y);
+                    config.getFarms().set("Farms." + name + ".Spawn.Z", z);
+                    config.saveFarms();
+                    player.sendMessage(ChatColor.DARK_AQUA + "Farm Spawn Set At (X:" + x + ", Y: " + y + ", Z: " + z);
+                } else {
+                    player.sendMessage(ChatColor.DARK_AQUA + "You Must Be The Owner Of The Farm To Set It's Spawn");
+                }
             } else {
                 player.sendMessage (ChatColor.DARK_AQUA + "You Must Be In Your Farm To Set A Spawn Point");
             }
         } else {
             player.sendMessage (ChatColor.DARK_AQUA + "You Do Not Own A Farm");
         }
+    }
+
+    public UUID getFarmOwner(String name) {
+        return UUID.fromString(config.getFarms().getString("Farms." + name + ".Creator"));
     }
 
     public Location getFarmSpawn (Player player) {
@@ -745,6 +758,30 @@ public class FarmMethods {
             }
         }
         return null;
+    }
+
+    public void listFarms(Player player) {
+        List<String> farmList = getFarmList();
+        StringBuilder build = new StringBuilder();
+        if (!farmList.isEmpty()) {
+            for (String aFarmList : farmList) {
+                build.append(aFarmList);
+                if (!aFarmList.equals(farmList.get(farmList.size() - 1))) {
+                    build.append(", ");
+                }
+            }
+            player.sendMessage(ChatColor.DARK_AQUA + "Farms: " + ChatColor.DARK_GRAY + build.toString());
+        } else {
+            player.sendMessage(ChatColor.DARK_AQUA + "No Farms To List");
+        }
+    }
+
+    public List<String> getFarmList() {
+        List<String> names = new ArrayList<>();
+        for (String farmNames: config.getFarms().getConfigurationSection("Farms").getKeys(false)) {
+            names.add(farmNames);
+        }
+        return names;
     }
 
     public Player getPlayerFromUUID(UUID uuid) {
@@ -1022,7 +1059,7 @@ public class FarmMethods {
         int result1 = r.nextInt(x1 - x) + x;
         int result2 = r.nextInt(z1 - z) + z;
 
-        return new Location(world, result1, y, result2);
+        return new Location(world, result1, y + 1, result2);
 
     }
 

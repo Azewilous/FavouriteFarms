@@ -56,6 +56,13 @@ public class FarmExecutor implements CommandExecutor {
                             } else {
                                 player.sendMessage(ChatColor.DARK_RED + "Must Be An OP To Run This Command");
                             }
+                        } else if (args[0].equalsIgnoreCase("list")) {
+                            if (player.hasPermission(FarmPermissions.COMMAND_LIST_FARMS.toString()) || player.isOp()) {
+                                method.listFarms(player);
+                            } else {
+                                player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                        + FarmPermissions.COMMAND_LIST_FARMS.toString());
+                            }
                         } else if (args[0].equalsIgnoreCase("tool")) {
                             if (player.hasPermission(FarmPermissions.COMMAND_TOOL_SELF.toString()) || player.isOp()) {
                                 method.giveSelector(player);

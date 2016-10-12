@@ -17,6 +17,7 @@ public enum FarmPermissions {
     COMMAND_START_FARM_OTHER("favfarms.create.other"),
     COMMAND_REMOVE_FARM("favfarms.farm.remove"),
     COMMAND_REMOVE_FARM_OTHER("favfarms.remove.other"),
+    COMMAND_LIST_FARMS("favfarms.list"),
     COMMAND_INFO_SELF("favfarms.info.self"),
     COMMAND_INFO_OTHERS("favfarms.info.others"),
     COMMAND_OBTAIN_CATCHER("favfarms.catcher.self"),
