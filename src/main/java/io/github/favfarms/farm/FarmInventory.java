@@ -51,6 +51,7 @@ public class FarmInventory {
             animalInv.setItem(3, FarmItems.getInstance().createModificationItem(animal));
             animalInv.setItem(5, FarmItems.getInstance().createFreezeAnimalItem(animal));
             animalInv.setItem(6, FarmItems.getInstance().createTeleportToItem(animal));
+            animalInv.setItem(7, FarmItems.getInstance().createTransferBetweenFarms(animal, player));
             animalInv.setItem(8, FarmItems.getInstance().createReturnItem(animal));
             if (animal instanceof Sheep) {
                 animalInv.setItem(4, FarmItems.getInstance().createSheepFurReset(animal));

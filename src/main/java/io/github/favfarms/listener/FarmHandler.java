@@ -21,6 +21,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -215,6 +216,18 @@ public class FarmHandler implements Listener {
         }
     }
 
+    @SuppressWarnings("unused")
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        Player player = (Player) event.getPlayer();
+        Inventory inv = event.getInventory();
+        if (inv.getName().equalsIgnoreCase(method.getPlayerFarmsInv(player).getName())) {
+            if (method.isInTransfer(player)) {
+                method.cancelTransfer(player);
+            }
+        }
+    }
+
     @SuppressWarnings({"unused", "deprecation"})
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -228,7 +241,9 @@ public class FarmHandler implements Listener {
                     if (inventory.getName().equals(FarmMethods.getInstance().getPlayerFarmsInv(player).getName())) {
                         event.setCancelled(true);
                         if (clicked.isSimilar(FItems.createFarmsListItem(method.getFarmFromItem(clicked)))) {
-                            //TODO Something Later
+                            if (method.isInTransfer(player)) {
+                                method.transferAnimal(player, method.getFarmFromItem(clicked));
+                            }
                         }
                     }
                     if (method.isAnimalInvItem(player, clicked)) {
@@ -251,7 +266,6 @@ public class FarmHandler implements Listener {
                             if (clicked.isSimilar(FItems.createTeleportHereItem((Animals)
                                     method.getAnimalFromItem(clicked, world)))) {
                                 method.teleportAnimalToPlayer(player, clicked);
-
                             }
                             //Disables Animals AI
                             if (clicked.isSimilar(FItems.createFreezeAnimalItem((Animals)
@@ -277,6 +291,12 @@ public class FarmHandler implements Listener {
                                 if (method.hasReplenishUsages(player)) {
                                     method.resetSheepFur(clicked, world);
                                 }
+                            }
+                            //Transfer Animal To Another Farm
+                            if ((clicked.isSimilar(FItems.createTransferBetweenFarms((Animals)
+                                    method.getAnimalFromItem(clicked, world), player)))) {
+                                method.setInTransfer(player, clicked);
+                                method.openPlayerFarmsInv(player);
                             }
                             //Teleports An Animal Home IE. Player Spawn
                             if (clicked.isSimilar(FItems.createHomeItem((Animals)

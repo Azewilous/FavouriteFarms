@@ -99,6 +99,9 @@ public class FarmMethods {
     HashMap<UUID, Integer> taskID_02 = new HashMap<>();
     HashMap<UUID, Integer> taskID_03 = new HashMap<>();
 
+    //Transfering Animals
+    HashMap<Player, Animals> inTranser = new HashMap<>();
+
     public void createFarmData(Player player, String farmName) {
         if (player.hasPermission(FarmPermissions.BYPASS_FARM_CREATE_COOLDOWN.toString()) || player.isOp()) {
             if (recentCreateTime.containsKey(player.getUniqueId())) {
@@ -924,6 +927,36 @@ public class FarmMethods {
         return FarmInventory.getInstance().createFarmListInventory(player, listFarms);
     }
 
+    public void transferAnimal(Player player, String farm) {
+        Animals animal = inTranser.get(player);
+        Location loc = getFarmSpawn(player, farm);
+        animal.removeMetadata("Home", FavFarms.getInstance());
+        animal.setMetadata("Home", new FixedMetadataValue(FavFarms.getInstance(), farm));
+        animal.teleport(loc);
+        player.sendMessage(ChatColor.DARK_AQUA + "You Have Successfully Transferred " + ChatColor.GOLD + animal.getName()
+                + ChatColor.DARK_AQUA + " To " + ChatColor.DARK_GRAY + farm);
+        transferComplete(player);
+    }
+
+    public boolean isInTransfer(Player player) {
+        return inTranser.containsKey(player);
+    }
+
+    public void setInTransfer(Player player, ItemStack item) {
+        Animals animal = (Animals) getAnimalFromItem(item, player.getWorld());
+        inTranser.put(player, animal);
+    }
+
+    public void transferComplete(Player player) {
+        inTranser.remove(player);
+        player.closeInventory();
+    }
+
+    public void cancelTransfer(Player player) {
+        inTranser.remove(player);
+        player.sendMessage(ChatColor.DARK_AQUA + "You Have Canceled Animal Transfer");
+    }
+
     public void openPlayerFarmsInv(Player player) {
         player.openInventory(getPlayerFarmsInv(player));
     }
@@ -1068,8 +1101,8 @@ public class FarmMethods {
             minZ = z;
             maxZ = z1;
         }
-        int result1 = r.nextInt(maxX - minX) + minX;
-        int result2 = r.nextInt(maxZ - minZ) + minZ;
+        int result1 = r.nextInt((maxX - minX) + 1) + minX;
+        int result2 = r.nextInt((maxZ - minZ) + 1) + minZ;
 
         return new Location(world, result1, y, result2);
 
@@ -1241,8 +1274,7 @@ public class FarmMethods {
         ItemMeta meta = item.getItemMeta();
         String farmName = "";
         if (meta.hasDisplayName()) {
-            farmName = meta.getDisplayName().substring(6);
-            Bukkit.getServer().broadcastMessage(farmName);
+            farmName = meta.getDisplayName().substring(7);
         }
         return farmName;
     }
@@ -1753,28 +1785,33 @@ public class FarmMethods {
 
     public void saveAnimals(Player player) {
         List<String> temp = new ArrayList<>();
+        List<String> homes = new ArrayList<>();
         if (animalsMap != null) {
             if (hasFarm(player.getUniqueId())) {
                 for (UUID ownerId : animalsMap.keySet()) {
                     for (UUID animalIds : animalsMap.get(ownerId)) {
-                        String str = animalIds.toString();
-                        temp.add(str);
+                        homes.add(getAnimalFromUUID(animalIds, player.getWorld()).getMetadata("Home").get(0).asString());
+                        temp.add(animalIds.toString());
                     }
-                    config.getAnimals().set("Animals." + ownerId.toString() + ".Ids", temp);
-                    config.saveAnimals();
+                    for (String place : homes) {
+                        config.getAnimals().set("Animals." + ownerId.toString() + "." + place + ".Ids", temp);
+                    }
                 }
+                config.saveAnimals();
             }
         }
     }
 
     public void loadAnimals(Player player) {
         if (config.getAnimals().get("Animals." + player.getUniqueId()) != null) {
-            List<String> strList = config.getAnimals().getStringList("Animals." + player.getUniqueId() + ".Ids");
-            for (String animalIds : strList) {
-                animalsMap.put(player.getUniqueId(), UUID.fromString(animalIds));
+            for (String home : getFarmsForPlayer(player)) {
+                List<String> strList = config.getAnimals().getStringList("Animals." + player.getUniqueId() + "." + home + ".Ids");
+                for (String animalIds : strList) {
+                    Animals animal = (Animals) getAnimalFromUUID(UUID.fromString(animalIds), player.getWorld());
+                    animal.setMetadata("Home", new FixedMetadataValue(FavFarms.getInstance(), home));
+                    animalsMap.put(player.getUniqueId(), animal.getUniqueId());
+                }
             }
-        } else {
-            config.getAnimals().createSection("Animals");
         }
     }
 

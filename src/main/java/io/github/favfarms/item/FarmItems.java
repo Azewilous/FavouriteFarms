@@ -45,7 +45,7 @@ public class FarmItems {
         lore.add(ChatColor.BLUE + "AgeLock: " + animal.getAgeLock());
         lore.add(ChatColor.BLUE + "Health: " + animal.getHealth());
         lore.add(ChatColor.BLUE + "Breedable: " + animal.canBreed());
-        lore.add(ChatColor.GRAY + "Home: " + animal.getMetadata("Home"));
+        lore.add(ChatColor.GRAY + "Home: " + animal.getMetadata("Home").get(0).asString());
         lore.add(ChatColor.GRAY + "UUID: " + animal.getUniqueId());
         eggMeta.setLore(lore);
         egg.setItemMeta(eggMeta);
@@ -276,6 +276,20 @@ public class FarmItems {
         return back;
     }
 
+    public ItemStack createTransferBetweenFarms(Animals animal, Player player) {
+        ItemStack transfer = new ItemStack(Material.GLOWSTONE, 1);
+        ItemMeta transferMeta = transfer.getItemMeta();
+        transferMeta.setDisplayName(ChatColor.BLUE + "Transfer " + ChatColor.GOLD + animal.getName() + ChatColor.BLUE + " To Farm");
+        String farm = animal.getMetadata("Home").get(0).asString();
+        List<String> lore = new ArrayList<>();
+        lore.add(ChatColor.GREEN + "Current Farm: " + farm);
+        lore.add(ChatColor.DARK_GRAY + "Player: " + player.getUniqueId());
+        lore.add(ChatColor.DARK_GRAY + "UUID: " + animal.getUniqueId());
+        transferMeta.setLore(lore);
+        transfer.setItemMeta(transferMeta);
+        return transfer;
+    }
+
     public ItemStack createChanceModifier(Player player) {
         Long remaining = config.getFav().getLong("Delays.IncreasedRateTime");
         int percentage = config.getFav().getInt("Enhancement.CatchRateIncrease");
@@ -344,7 +358,7 @@ public class FarmItems {
         int maxX = config.getFarms().getInt("Farms." + name + ".Max.X");
         int maxY = config.getFarms().getInt("Farms." + name + ".Max.Y");
         int maxZ = config.getFarms().getInt("Farms." + name + ".Max.Z");
-        lore.add(ChatColor.BLUE + "Owner UUID: " + ownerID);
+        lore.add(ChatColor.BLUE + "Owner: " + ownerID);
         lore.add(ChatColor.BLUE + "Farm ID: " + config.getFarms().getInt("Farms." + name + ".ID"));
         lore.add(ChatColor.BLUE + "Farm Size: " + config.getFarms().getString("Farms." + name + ".Size"));
         lore.add(ChatColor.BLUE + "Farm World: " + world);
