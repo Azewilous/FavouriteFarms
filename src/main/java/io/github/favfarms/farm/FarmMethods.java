@@ -930,12 +930,20 @@ public class FarmMethods {
     public void transferAnimal(Player player, String farm) {
         Animals animal = inTranser.get(player);
         Location loc = getFarmSpawn(player, farm);
-        animal.removeMetadata("Home", FavFarms.getInstance());
-        animal.setMetadata("Home", new FixedMetadataValue(FavFarms.getInstance(), farm));
-        animal.teleport(loc);
-        player.sendMessage(ChatColor.DARK_AQUA + "You Have Successfully Transferred " + ChatColor.GOLD + animal.getName()
-                + ChatColor.DARK_AQUA + " To " + ChatColor.DARK_GRAY + farm);
-        transferComplete(player);
+        String home = animal.getMetadata("Home").get(0).asString();
+        if (!farm.equalsIgnoreCase(home)) {
+            animal.removeMetadata("Home", FavFarms.getInstance());
+            animal.setMetadata("Home", new FixedMetadataValue(FavFarms.getInstance(), farm));
+            animal.teleport(loc);
+            player.sendMessage(ChatColor.DARK_AQUA + "You Have Successfully Transferred " + ChatColor.GOLD + animal.getName()
+                    + ChatColor.DARK_AQUA + " To " + ChatColor.DARK_GRAY + farm);
+            transferComplete(player);
+            saveAnimals(player);
+        } else {
+            cancelTransfer(player);
+            player.sendMessage(ChatColor.DARK_AQUA + "Transfer Failed " + ChatColor.GOLD + animal.getName()
+                    + ChatColor.DARK_AQUA + " Is Already In Farm " + ChatColor.DARK_GRAY + farm);
+        }
     }
 
     public boolean isInTransfer(Player player) {
@@ -955,6 +963,7 @@ public class FarmMethods {
     public void cancelTransfer(Player player) {
         inTranser.remove(player);
         player.sendMessage(ChatColor.DARK_AQUA + "You Have Canceled Animal Transfer");
+        player.closeInventory();
     }
 
     public void openPlayerFarmsInv(Player player) {
