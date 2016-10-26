@@ -8,8 +8,10 @@ import com.sk89q.worldguard.bukkit.permission.RegionPermissionModel;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import io.github.favfarms.FavFarms;
+import io.github.favfarms.ability.Abilities;
 import io.github.favfarms.configuration.FarmConfig;
 import io.github.favfarms.item.FarmItems;
+import io.github.favfarms.navigation.FarmNavigation;
 import io.github.favfarms.permission.FarmPermissions;
 import io.github.favfarms.select.SelectionTool;
 import me.ryanhamshire.GriefPrevention.Claim;
@@ -47,7 +49,7 @@ public class FarmMethods {
         return instance;
     }
 
-    Farm farm = Farm.getInstance();
+    FarmData farmData = FarmData.getInstance();
     FarmConfig config = FarmConfig.getInstance();
     SelectionTool sel = SelectionTool.getInstance();
     FarmItems fItems = FarmItems.getInstance();
@@ -88,7 +90,7 @@ public class FarmMethods {
     HashMap<UUID, Long> catcherObtainTime = new HashMap<>();
     HashMap<UUID, Long> catchRateTime = new HashMap<>();
 
-    //Farm Animal Data
+    //FarmData Animal Data
     Multimap<UUID, UUID> animalsMap = ArrayListMultimap.create();
 
     //End Of
@@ -98,9 +100,20 @@ public class FarmMethods {
     HashMap<UUID, Integer> taskID_01 = new HashMap<>();
     HashMap<UUID, Integer> taskID_02 = new HashMap<>();
     HashMap<UUID, Integer> taskID_03 = new HashMap<>();
+    HashMap<Player, Integer> taskID_04 = new HashMap<>();
 
-    //Transfering Animals
-    HashMap<Player, Animals> inTranser = new HashMap<>();
+    //Transferring Animals
+    HashMap<Player, Animals> inTransfer = new HashMap<>();
+
+    //Toggle Abilities
+    public HashMap<Animals, Boolean> toggleSnowBlower = new HashMap<>();
+    public HashMap<Animals, Boolean> toggleSprinkler = new HashMap<>();
+
+    //Toggle Follow
+    Multimap<Player, Animals> following = ArrayListMultimap.create();
+
+    //FarmData Mail
+    HashMap<UUID, List<String>> farmMail = new HashMap<>();
 
     public void createFarmData(Player player, String farmName) {
         if (player.hasPermission(FarmPermissions.BYPASS_FARM_CREATE_COOLDOWN.toString()) || player.isOp()) {
@@ -112,7 +125,7 @@ public class FarmMethods {
             if (!recentCreateTime.containsKey(player.getUniqueId())) {
                 if (!farmExist(farmName)) {
                     setID();
-                    farm.createFarm(farmName, player.getUniqueId(), ID, blocks.get(player.getUniqueId()));
+                    farmData.createFarm(farmName, player.getUniqueId(), ID, blocks.get(player.getUniqueId()));
 
                     createFarmArea(player, blkLoc1.get(player));
                     createPlayerData(player, getLevel(player), getExp(player));
@@ -122,10 +135,10 @@ public class FarmMethods {
                     recentCreateTime.put(player.getUniqueId(), time);
                     applyCooldown(player);
 
-                    player.sendMessage(ChatColor.GREEN + "Created Farm " + farmName + " with bounds min("
+                    player.sendMessage(ChatColor.GREEN + "Created FarmData " + farmName + " with bounds min("
                             + max.get(player) + ") - max (" + min.get(player) + ")");
                 } else {
-                    player.sendMessage(ChatColor.DARK_AQUA + "This Farm Name Is Taken");
+                    player.sendMessage(ChatColor.DARK_AQUA + "This FarmData Name Is Taken");
                 }
             } else {
                 long time = recentCreateTime.get(player.getUniqueId());
@@ -140,7 +153,6 @@ public class FarmMethods {
         taskID_01.put(player.getUniqueId(), scheduler.scheduleSyncRepeatingTask(FavFarms.getInstance(), () -> {
             if (recentCreateTime.get(player.getUniqueId()) != 0) {
                 recentCreateTime.put(player.getUniqueId(), recentCreateTime.get(player.getUniqueId()) - 1);
-                player.sendMessage("Time: " + recentCreateTime.get(player.getUniqueId()));
             } else {
                 recentCreateTime.remove(player.getUniqueId());
                 for (Integer taskId : taskID_01.values()) {
@@ -148,7 +160,7 @@ public class FarmMethods {
                         Bukkit.getServer().getScheduler().cancelTask(taskId);
                     }
                 }
-                player.sendMessage(ChatColor.DARK_AQUA + "You Can Now Create A Farm Again");
+                player.sendMessage(ChatColor.DARK_AQUA + "You Can Now Create A FarmData Again");
             }
         }, 0, 20));
     }
@@ -205,7 +217,7 @@ public class FarmMethods {
     }
 
     public void createFarmArea(Player player, Location blockLoc1) {
-        farm.createArea(vector1.get(player), vector2.get(player), blockLoc1);
+        farmData.createArea(vector1.get(player), vector2.get(player), blockLoc1);
     }
 
     public void calculateFarmSize(Player player, BlockVector blockVec1, BlockVector blockVec2) {
@@ -245,7 +257,7 @@ public class FarmMethods {
             }
         }
         blocks = blks;
-        player.sendMessage("Farm Has Been Expanded Vertically");
+        player.sendMessage("FarmData Has Been Expanded Vertically");
         if (isValidFarmSize()) {
             count--;
         } else {
@@ -254,18 +266,18 @@ public class FarmMethods {
     }
 
     public void checkExpand (Player player) {
-        new FancyMessage("Would You Like To Expand Farm Vertically For Protection ")
+        new FancyMessage("Would You Like To Expand FarmData Vertically For Protection ")
                 .color(ChatColor.AQUA)
                 .then("Yes")
                 .color(ChatColor.GREEN)
                 .tooltip("Best Option Allow For Greater Protection")
                 .color(ChatColor.AQUA)
                 .style(ChatColor.BOLD)
-                .command("/farm expand")
+                .command("/farmData expand")
                 .then("No")
                 .color(ChatColor.RED)
                 .style(ChatColor.BOLD)
-                .command("/farm cancel")
+                .command("/farmData cancel")
                 .tooltip(" Lest Protection, And Selection Must Be More Than 2 Blocks High")
                 .send(player);
     }
@@ -335,7 +347,7 @@ public class FarmMethods {
                 world.spawnParticle(Particle.SPELL_WITCH, blockBot.get(player.getUniqueId()).getLocation()
                         .add(0, 0, 0), 20, 0.0, -10, 0.0, 15);
             } else {
-                player.sendMessage(ChatColor.DARK_AQUA + "Farm Highlights Have Faded");
+                player.sendMessage(ChatColor.DARK_AQUA + "FarmData Highlights Have Faded");
                 Bukkit.getServer().getScheduler().cancelTask(taskID_001.get(player));
             }
         }, 0, 1));
@@ -366,7 +378,7 @@ public class FarmMethods {
                     delayCmdSend.put(player.getUniqueId(), getDelayedLeft(player) - 1);
                 } else {
                     delayCmdSend.remove(player.getUniqueId());
-                    player.sendMessage(ChatColor.DARK_AQUA + "Farm Commands Are Know Off Cooldown");
+                    player.sendMessage(ChatColor.DARK_AQUA + "FarmData Commands Are Know Off Cooldown");
                     Bukkit.getServer().getScheduler().cancelTask(taskID_003.get(player));
                 }
             }
@@ -405,7 +417,7 @@ public class FarmMethods {
                     return true;
                 } else {
                     int required = getBlocks(player) - size;
-                    player.sendMessage(ChatColor.DARK_AQUA + "You Don't Have Enough Farm Blocks For This Claim, You Require "
+                    player.sendMessage(ChatColor.DARK_AQUA + "You Don't Have Enough FarmData Blocks For This Claim, You Require "
                             + required + " More Blocks");
                     return false;
                 }
@@ -415,7 +427,7 @@ public class FarmMethods {
                     return true;
                 } else {
                     int required = getBlocks(player) - size;
-                    player.sendMessage(ChatColor.DARK_AQUA + "You Don't Have Enough Farm Blocks For This Claim, You Require "
+                    player.sendMessage(ChatColor.DARK_AQUA + "You Don't Have Enough FarmData Blocks For This Claim, You Require "
                             + required + " More Blocks");
                     return false;
                 }
@@ -446,7 +458,7 @@ public class FarmMethods {
     public boolean isValidFarmLocation(Player player, BlockVector blockVecFirst, BlockVector blockVecSecond) {
         World world = player.getWorld();
         if (intersectsWithFarm(blockVecFirst.toLocation(world), blockVecSecond.toLocation(world), player)) {
-            player.sendMessage(ChatColor.DARK_AQUA + "This Selection Overlaps Another Farm");
+            player.sendMessage(ChatColor.DARK_AQUA + "This Selection Overlaps Another FarmData");
             return false;
         }
         if (!hasEntitiesInArea(player, blockVecFirst, blockVecSecond)) {
@@ -465,11 +477,11 @@ public class FarmMethods {
                     }
                     if (claim != null) {
                         if (!claim.getOwnerName().equalsIgnoreCase(player.getName())) {
-                            player.sendMessage(ChatColor.DARK_AQUA + "You Cannot Create A Farm In This Claim");
+                            player.sendMessage(ChatColor.DARK_AQUA + "You Cannot Create A FarmData In This Claim");
                             return false;
                         } else {
                             player.sendMessage(ChatColor.RED + "[Warning]"
-                                    + ChatColor.DARK_AQUA + " You Are Creating A Farm That Intersects A Claim");
+                                    + ChatColor.DARK_AQUA + " You Are Creating A FarmData That Intersects A Claim");
                             return true;
                         }
                     }
@@ -500,18 +512,18 @@ public class FarmMethods {
                     }
                     if (rg != null) {
                         if (!rg.isOwner(lp)) {
-                            player.sendMessage(ChatColor.DARK_AQUA + "You Cannot Create A Farm In This Region");
+                            player.sendMessage(ChatColor.DARK_AQUA + "You Cannot Create A FarmData In This Region");
                             return false;
                         } else {
                             player.sendMessage(ChatColor.RED + "[Warning]"
-                                    + ChatColor.DARK_AQUA + " You Are Creating A Farm That Intersects A Region");
+                                    + ChatColor.DARK_AQUA + " You Are Creating A FarmData That Intersects A Region");
                             return true;
                         }
                     }
                 }
             }
         } else {
-            player.sendMessage(ChatColor.DARK_AQUA + "You Cannot Create A Farm That Has Mobs In It");
+            player.sendMessage(ChatColor.DARK_AQUA + "You Cannot Create A FarmData That Has Mobs In It");
         }
         return true;
     }
@@ -574,7 +586,7 @@ public class FarmMethods {
 
             if (check) {
                 if (player.hasPermission(FarmPermissions.BYPASS_FARM_AREA.toString())) {
-                    player.sendMessage(ChatColor.AQUA + "The Selection Intersects With A Farm");
+                    player.sendMessage(ChatColor.AQUA + "The Selection Intersects With A FarmData");
                     return false;
                 } else {
                     return true;
@@ -629,7 +641,7 @@ public class FarmMethods {
 
             if (check) {
                 if (player.hasPermission(FarmPermissions.BYPASS_FARM_AREA.toString())) {
-                    player.sendMessage(ChatColor.AQUA + "The Selection Intersects With A Farm");
+                    player.sendMessage(ChatColor.AQUA + "The Selection Intersects With A FarmData");
                     return false;
                 } else {
                     return true;
@@ -728,25 +740,24 @@ public class FarmMethods {
             if (checkPlayerInFarm(player)) {
                 World world = player.getWorld();
                 String name = getFarmFromLocation(player.getLocation());
-                player.sendMessage("Name: " + name);
                 if (player.getUniqueId().equals(getFarmOwner(name))) {
                     double x = player.getLocation().getX();
                     double y = player.getLocation().getY() + 2;
                     double z = player.getLocation().getZ();
-                    config.getFarms().set("Farms." + name + ".World", world.getName());
+                    config.getFarms().set("Farms." + name + ".Spawn.World", world.getName());
                     config.getFarms().set("Farms." + name + ".Spawn.X", x);
                     config.getFarms().set("Farms." + name + ".Spawn.Y", y);
                     config.getFarms().set("Farms." + name + ".Spawn.Z", z);
                     config.saveFarms();
-                    player.sendMessage(ChatColor.DARK_AQUA + "Farm Spawn Set At (X:" + x + ", Y: " + y + ", Z: " + z);
+                    player.sendMessage(ChatColor.DARK_AQUA + "FarmData Spawn Set At (X:" + x + ", Y: " + y + ", Z: " + z);
                 } else {
-                    player.sendMessage(ChatColor.DARK_AQUA + "You Must Be The Owner Of The Farm To Set It's Spawn");
+                    player.sendMessage(ChatColor.DARK_AQUA + "You Must Be The Owner Of The FarmData To Set It's Spawn");
                 }
             } else {
-                player.sendMessage (ChatColor.DARK_AQUA + "You Must Be In Your Farm To Set A Spawn Point");
+                player.sendMessage (ChatColor.DARK_AQUA + "You Must Be In Your FarmData To Set A Spawn Point");
             }
         } else {
-            player.sendMessage (ChatColor.DARK_AQUA + "You Do Not Own A Farm");
+            player.sendMessage (ChatColor.DARK_AQUA + "You Do Not Own A FarmData");
         }
     }
 
@@ -756,9 +767,9 @@ public class FarmMethods {
 
     public Location getFarmSpawn (Player player, String name) {
         if (hasFarm(player.getUniqueId())) {
-            if (config.getFarms().get("Farms." + name + ".World") != null) {
+            if (config.getFarms().get("Farms." + name + ".Spawn.World") != null) {
                 World world = FavFarms.getInstance().getServer().getWorld(config.getFarms().getString("Farms." + name
-                        + ".World"));
+                        + ".Spawn.World"));
                 double x = config.getFarms().getDouble("Farms." + name + ".Spawn.X");
                 double y = config.getFarms().getDouble("Farms." + name + ".Spawn.Y");
                 double z = config.getFarms().getDouble("Farms." + name + ".Spawn.Z");
@@ -809,13 +820,13 @@ public class FarmMethods {
                         config.getPlayerData().set("PlayerData." + player.getUniqueId() + ".FarmsOwned", amount);
                         config.saveFarms();
                         config.savePlayerData();
-                        player.sendMessage(ChatColor.DARK_AQUA + "You Have Deleted The Farm " + name);
+                        player.sendMessage(ChatColor.DARK_AQUA + "You Have Deleted The FarmData " + name);
                     }
                 } else {
-                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have Permission To Remove This Farm");
+                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have Permission To Remove This FarmData");
                 }
             } else {
-                player.sendMessage(ChatColor.DARK_AQUA + "This Farm Does Not Exist");
+                player.sendMessage(ChatColor.DARK_AQUA + "This FarmData Does Not Exist");
             }
         }
     }
@@ -829,14 +840,25 @@ public class FarmMethods {
         return false;
     }
 
-    public void removeFarmAnimal(Animals animal, Player player) {
+    public void removeFarmAnimal(Animals animal) {
         UUID animalUUID = animal.getUniqueId();
+        List<String> mail = new ArrayList<>();
         if (hasOwner(animalUUID)) {
-            if (hasFarm(player.getUniqueId())) {
+            Player player = getOwnerFromAnimal(animalUUID);
+            String home = animal.getMetadata("Home").get(0).asString();
+            if (player.isOnline()) {
                 animalsMap.remove(player.getUniqueId(), animalUUID);
-                config.getAnimals().get("Animals." + player.getUniqueId() + ".Ids." + animalUUID, null);
+                config.getAnimals().get("Animals." + player.getUniqueId() + "." + home + "." + animalUUID, null);
                 saveAnimals(player);
-                player.sendMessage(ChatColor.DARK_AQUA + animal.getName() + " Has Been Removed From Farm");
+                player.sendMessage(ChatColor.DARK_AQUA + animal.getName() + " Has Been Removed From FarmData");
+            } else {
+                String string = "&6" + animal.getName() + "&3 Was Killed and Has Been Removed From FarmData";
+                mail.add(string);
+                animalsMap.remove(player.getUniqueId(), animalUUID);
+                farmMail.put(player.getUniqueId(), mail);
+                config.getAnimals().get("Animals." + player.getUniqueId() + "." + home + "." + animalUUID, null);
+                saveAnimals(player);
+                saveFarmMail(player);
             }
         }
     }
@@ -863,7 +885,7 @@ public class FarmMethods {
                                 animal.teleport(getRandomLocWithinFarm(player));
                                 animalsMap.put(player.getUniqueId(), animalUUID);
                                 giveExp(player, animal);
-                                player.sendMessage(ChatColor.DARK_AQUA + animal.getName() + " Has Been Added To Farm");
+                                player.sendMessage(ChatColor.DARK_AQUA + animal.getName() + " Has Been Added To FarmData");
                                 player.sendMessage(ChatColor.YELLOW + "You Have Gained " + calculateExpGain(animal)
                                         + " Experience");
                                 caught.remove(animal);
@@ -871,19 +893,19 @@ public class FarmMethods {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Almost Caught " + animal.getName());
                             }
                         } else {
-                            player.sendMessage(ChatColor.DARK_AQUA + "You Have Not Set A Spawn For Your Farm Yet");
+                            player.sendMessage(ChatColor.DARK_AQUA + "You Have Not Set A Spawn For Your FarmData Yet");
                         }
                     } else {
-                        player.sendMessage(ChatColor.DARK_AQUA + "This Farm Doesn't Have Space");
+                        player.sendMessage(ChatColor.DARK_AQUA + "This FarmData Doesn't Have Space");
                     }
                 } else {
                     player.sendMessage(ChatColor.DARK_AQUA + "This Animal Has An Owner");
                 }
             } else {
-                player.sendMessage(ChatColor.DARK_AQUA + "This Animal Is In A Farm");
+                player.sendMessage(ChatColor.DARK_AQUA + "This Animal Is In A FarmData");
             }
         } else {
-            player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Own A Farm");
+            player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Own A FarmData");
         }
     }
 
@@ -919,7 +941,7 @@ public class FarmMethods {
                 }
             }
         } else
-            getPlayerFromUUID(uuid).sendMessage(ChatColor.DARK_AQUA + "This Player Does Not Have A Farm");
+            getPlayerFromUUID(uuid).sendMessage(ChatColor.DARK_AQUA + "This Player Does Not Have A FarmData");
     }
 
     public Inventory getPlayerFarmsInv(Player player) {
@@ -928,7 +950,7 @@ public class FarmMethods {
     }
 
     public void transferAnimal(Player player, String farm) {
-        Animals animal = inTranser.get(player);
+        Animals animal = inTransfer.get(player);
         Location loc = getFarmSpawn(player, farm);
         String home = animal.getMetadata("Home").get(0).asString();
         if (!farm.equalsIgnoreCase(home)) {
@@ -942,26 +964,26 @@ public class FarmMethods {
         } else {
             cancelTransfer(player);
             player.sendMessage(ChatColor.DARK_AQUA + "Transfer Failed " + ChatColor.GOLD + animal.getName()
-                    + ChatColor.DARK_AQUA + " Is Already In Farm " + ChatColor.DARK_GRAY + farm);
+                    + ChatColor.DARK_AQUA + " Is Already In FarmData " + ChatColor.DARK_GRAY + farm);
         }
     }
 
     public boolean isInTransfer(Player player) {
-        return inTranser.containsKey(player);
+        return inTransfer.containsKey(player);
     }
 
     public void setInTransfer(Player player, ItemStack item) {
         Animals animal = (Animals) getAnimalFromItem(item, player.getWorld());
-        inTranser.put(player, animal);
+        inTransfer.put(player, animal);
     }
 
     public void transferComplete(Player player) {
-        inTranser.remove(player);
+        inTransfer.remove(player);
         player.closeInventory();
     }
 
     public void cancelTransfer(Player player) {
-        inTranser.remove(player);
+        inTransfer.remove(player);
         player.sendMessage(ChatColor.DARK_AQUA + "You Have Canceled Animal Transfer");
         player.closeInventory();
     }
@@ -1004,13 +1026,25 @@ public class FarmMethods {
     public Inventory getModifyInv(Player player, ItemStack item) {
         if (item != null) {
             Animals animal = (Animals) getAnimalFromItem(item, player.getWorld());
-            return FarmInventory.getInstance().createModificationInventory(player, animal);
+            if (item.getItemMeta().getDisplayName().equalsIgnoreCase(FarmItems.getInstance()
+                    .createModificationItem(animal).getItemMeta().getDisplayName())) {
+                return FarmInventory.getInstance().createModificationInventory(player, animal);
+            }
         }
         return null;
     }
 
     public void openModifyInv(Player player, ItemStack item) {
         player.openInventory(getModifyInv(player, item));
+    }
+
+    public Inventory getAbilityInv(Player player, ItemStack item) {
+        Animals animal = (Animals) getAnimalFromItem(item, player.getWorld());
+        return FarmInventory.getInstance().createAnimalAbilitiesInventory(player, animal);
+    }
+
+    public void openAbilityInv(Player player, ItemStack item) {
+        player.openInventory(getAbilityInv(player, item));
     }
 
     public Entity getAnimalFromUUID(UUID animalID, World world) {
@@ -1025,7 +1059,7 @@ public class FarmMethods {
 
     public boolean hasFarm(UUID uuid) {
         List<String> name = getFarmsForPlayer(getPlayer(uuid));
-        return name.size() != 0;
+        return name != null && name.size() != 0;
     }
 
     public void getFarmInfo(Player player, UUID uuid) {
@@ -1081,39 +1115,25 @@ public class FarmMethods {
 
     public Location getRandomLocWithinFarm(Player player) {
         String name = getFirstFarmWithSpace(player);
-        World world = Bukkit.getWorld(config.getFarms().getString("Farms." + name + ".World"));
-        int x = config.getFarms().getInt("Farms." + name + ".Min.X");
-        int z = config.getFarms().getInt("Farms." + name + ".Min.Z");
 
-        int x1 = config.getFarms().getInt("Farms." + name + ".Max.X");
-        int z1 = config.getFarms().getInt("Farms." + name + ".Max.Z");
+        World world = getFarmSpawn(player, name).getWorld();
 
+        int x = getFarmSpawn(player, name).getBlockX();
         int y = getFarmSpawn(player, name).getBlockY();
+        int z = getFarmSpawn(player, name).getBlockZ();
 
-        int minX;
-        int maxX;
-        int minZ;
-        int maxZ;
+        Location origin = new Location(world, x, y, z);
 
         Random r = new Random();
-        if (x > x1) {
-            minX = x1;
-            maxX = x;
-        } else {
-            minX = x;
-            maxX = x1;
-        }
-        if (z > z1) {
-            minZ = z1;
-            maxZ = z;
-        } else {
-            minZ = z;
-            maxZ = z1;
-        }
-        int result1 = r.nextInt((maxX - minX) + 1) + minX;
-        int result2 = r.nextInt((maxZ - minZ) + 1) + minZ;
 
-        return new Location(world, result1, y, result2);
+        Double randomRadius = r.nextDouble() * 3;
+        Double theta =  Math.toRadians(r.nextDouble() * 360);
+        Double phi = Math.toRadians(r.nextDouble() * 180 - 90);
+
+        double x1 = randomRadius * Math.cos(theta) * Math.sin(phi);
+        double z1 = randomRadius * Math.cos(phi);
+
+        return origin.add(x1, 0, z1);
 
     }
 
@@ -1122,10 +1142,10 @@ public class FarmMethods {
         if (!inv.contains(sel.getTool())) {
             if (hasEmptySlots(inv)) {
                 inv.setItem(getEmptySlots(inv).get(0), sel.getTool());
-                player.sendMessage(ChatColor.DARK_AQUA + "Obtained Farm Selection Tool");
+                player.sendMessage(ChatColor.DARK_AQUA + "Obtained FarmData Selection Tool");
             }
         } else {
-            player.sendMessage(ChatColor.DARK_AQUA + "You Already Have A Farm Selector");
+            player.sendMessage(ChatColor.DARK_AQUA + "You Already Have A FarmData Selector");
         }
     }
 
@@ -1288,8 +1308,14 @@ public class FarmMethods {
         return farmName;
     }
 
-    public boolean isAnimalInvItem(Player player, ItemStack item) {
-        return getAnimalFromItem(item, player.getWorld()) != null;
+    public boolean isAnimalInvItem(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        for (String id : meta.getLore()) {
+            if (id.contains("UUID")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void teleportPlayerToAnimal(Player player, ItemStack item) {
@@ -1544,7 +1570,7 @@ public class FarmMethods {
             level.put(player.getUniqueId(), value);
             config.getPlayerData().set("PlayerData." + player.getUniqueId() + ".FarmBlocks", blocksCombined);
             player.sendMessage(ChatColor.DARK_AQUA + "Leveled Up To " + ChatColor.GOLD + getLevel(player)
-                    + ChatColor.DARK_AQUA + " And Received " + ChatColor.GOLD + blocksReceived + " Farm Blocks");
+                    + ChatColor.DARK_AQUA + " And Received " + ChatColor.GOLD + blocksReceived + " FarmData Blocks");
         }
     }
 
@@ -1597,6 +1623,7 @@ public class FarmMethods {
         }
         if (chance > rand) {
             caught.put(animal, true);
+            assignRandomExperience(player, animal, rand);
         } else {
             caught.put(animal, false);
         }
@@ -1670,6 +1697,138 @@ public class FarmMethods {
         int least = getExpGainedLeast(animal);
         int most = getExpGainedMost(animal);
         return rand.nextInt(most - least) + least;
+    }
+
+    public void setToggleSnowBlower(Player player, Animals animal) {
+        if (toggleSnowBlower.containsKey(animal)) {
+            if (toggleSnowBlower.get(animal)) {
+                toggleSnowBlower.put(animal, false);
+                player.sendMessage(ChatColor.AQUA + "Toggled SnowBlower Off For " + animal.getName());
+            } else {
+                toggleSnowBlower.put(animal, true);
+                player.sendMessage(ChatColor.AQUA + "Toggled SnowBlower On For " + animal.getName());
+            }
+        } else {
+            toggleSnowBlower.put(animal, true);
+            player.sendMessage(ChatColor.AQUA + "Toggled SnowBlower On For " + animal.getName());
+        }
+    }
+
+    public boolean isToggledSnowBlower(Animals animal) {
+        return toggleSnowBlower.get(animal);
+    }
+
+    public void setToggleSprinkler(Player player, Animals animal) {
+        if (toggleSprinkler.containsKey(animal)) {
+            if (toggleSprinkler.get(animal)) {
+                toggleSprinkler.put(animal, false);
+                player.sendMessage(ChatColor.AQUA + "Toggled SnowBlower Off For " + animal.getName());
+
+            } else {
+                toggleSprinkler.put(animal, true);
+                player.sendMessage(ChatColor.AQUA + "Toggled SnowBlower On For " + animal.getName());
+            }
+        } else {
+            toggleSprinkler.put(animal, true);
+            player.sendMessage(ChatColor.AQUA + "Toggled SnowBlower On For " + animal.getName());
+        }
+    }
+
+    public boolean isToggledSprinkler(Animals animal) {
+        return toggleSprinkler.get(animal);
+    }
+
+    public void setFollowing(Player player, Animals animal) {
+        following.put(player, animal);
+        follow(player, animal);
+        player.sendMessage(ChatColor.GOLD + animal.getName() + ChatColor.DARK_AQUA + " Is Now Following You");
+    }
+
+    public void removeFollowing(Player player, Animals animal) {
+        following.remove(player, animal);
+        release(player, animal);
+        player.sendMessage(ChatColor.GOLD + animal.getName() + ChatColor.DARK_AQUA + " Is No Longer Following You");
+    }
+
+    @SuppressWarnings("unused")
+    public Collection<Animals> getFollowing(Player player) {
+        if (following.containsKey(player)) {
+            return following.get(player);
+        }
+        return null;
+    }
+
+    public boolean isFollowing(Player player, Animals animal) {
+        return (following.get(player).contains(animal));
+    }
+
+    public void release(Player player, Animals animal) {
+        if (isFollowing(player, animal)) {
+            Bukkit.getServer().getScheduler().cancelTask(taskID_04.get(player));
+            taskID_04.remove(player);
+            FarmNavigation.getInstance().deNavigate(animal);
+        }
+    }
+
+    public void follow(Player player, Animals animal) {
+        if (isFollowing(player, animal)) {
+            BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
+            taskID_04.put(player, scheduler.scheduleSyncRepeatingTask(FavFarms.getInstance(), () -> {
+                if (getDistance(player.getLocation(), animal.getLocation()) > 20) {
+                    animal.teleport(checkSafeLocation(player));
+                } else {
+                    FarmNavigation.getInstance().navigate(animal, getFrontOfPlayer(player), 0.7);
+                    animal.getEyeLocation().setYaw(player.getEyeLocation().getYaw());
+                }
+            }, 0, 7));
+        }
+    }
+
+    public Double getDistance(Location locFirst, Location locSecond) {
+        return locFirst.distance(locSecond);
+    }
+
+    public Location getFrontOfPlayer(Player player) {
+        Location eyelocation = player.getEyeLocation();
+        Vector vec = player.getLocation().getDirection().multiply(2);
+
+        return eyelocation.add(vec);
+    }
+
+    public Location checkSafeLocation(Player player) {
+        World world = player.getWorld();
+        Location loc = getRandomLocFromRad(player);
+        Block block = world.getBlockAt(loc);
+        if (block.getType().isSolid()) {
+            do {
+                block = world.getBlockAt(loc);
+                loc.add(0, 1, 0);
+            } while (!block.getType().isSolid());
+            return loc;
+        }
+        return loc;
+    }
+
+    public Location getRandomLocFromRad(Player player) {
+        World world = player.getWorld();
+
+        int x = player.getLocation().getBlockX();
+        int y = player.getLocation().getBlockY();
+        int z = player.getLocation().getBlockZ();
+
+        Location origin = new Location(world, x, y, z);
+
+        Random r = new Random();
+
+        Double randomRadius = r.nextDouble() * 3;
+        Double theta =  Math.toRadians(r.nextDouble() * 360);
+        Double phi = Math.toRadians(r.nextDouble() * 180 - 90);
+
+        double x1 = randomRadius * Math.cos(theta) * Math.sin(phi);
+        double z1 = randomRadius * Math.cos(phi);
+
+        return origin.add(x1, 0, z1);
+
     }
 
     @SuppressWarnings("deprecation")
@@ -1793,17 +1952,28 @@ public class FarmMethods {
     }
 
     public void saveAnimals(Player player) {
-        List<String> temp = new ArrayList<>();
-        List<String> homes = new ArrayList<>();
         if (animalsMap != null) {
             if (hasFarm(player.getUniqueId())) {
                 for (UUID ownerId : animalsMap.keySet()) {
                     for (UUID animalIds : animalsMap.get(ownerId)) {
-                        homes.add(getAnimalFromUUID(animalIds, player.getWorld()).getMetadata("Home").get(0).asString());
-                        temp.add(animalIds.toString());
-                    }
-                    for (String place : homes) {
-                        config.getAnimals().set("Animals." + ownerId.toString() + "." + place + ".Ids", temp);
+                        Animals animal = (Animals) getAnimalFromUUID(animalIds, player.getWorld());
+                        String home = animal.getMetadata("Home").get(0).asString();
+                        Integer exp = animal.getMetadata("Experience").get(0).asInt();
+                        Integer level = animal.getMetadata("Level").get(0).asInt();
+                        List<String> listAbility = new ArrayList<>();
+                        for (String ability : splitAbilitiesList(animal)) {
+                            listAbility.add(ability);
+                        }
+                        config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                .toString() + ".Name", animal.getName());
+                        config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                .toString() + ".Home", home);
+                        config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                .toString() + ".Experience", exp);
+                        config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                .toString() + ".Level", level);
+                        config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                .toString() + ".Abilities", listAbility);
                     }
                 }
                 config.saveAnimals();
@@ -1811,16 +1981,77 @@ public class FarmMethods {
         }
     }
 
-    public void loadAnimals(Player player) {
-        if (config.getAnimals().get("Animals." + player.getUniqueId()) != null) {
-            for (String home : getFarmsForPlayer(player)) {
-                List<String> strList = config.getAnimals().getStringList("Animals." + player.getUniqueId() + "." + home + ".Ids");
-                for (String animalIds : strList) {
-                    Animals animal = (Animals) getAnimalFromUUID(UUID.fromString(animalIds), player.getWorld());
-                    animal.setMetadata("Home", new FixedMetadataValue(FavFarms.getInstance(), home));
-                    animalsMap.put(player.getUniqueId(), animal.getUniqueId());
+    public List<String> splitAbilitiesList(Animals animal) {
+        List<String> values = new ArrayList<>();
+        if (animal.hasMetadata("Abilities")) {
+            for (MetadataValue ability : animal.getMetadata("Abilities")) {
+                String split[] = ability.asString().split(",");
+                for (String str : split) {
+                    values.add(str.replaceAll("[^a-zA-Z_]", "").trim());
                 }
             }
+        }
+        return values;
+    }
+
+    public void loadAnimals(Player player) {
+        String ownerId = player.getUniqueId().toString();
+        if (config.getAnimals().get("Animals." + player.getUniqueId()) != null) {
+            for (String home : config.getAnimals().getConfigurationSection("Animals." + ownerId).getKeys(false)) {
+                for (String animalId : config.getAnimals().getConfigurationSection("Animals." + ownerId + "."
+                        + home).getKeys(false)) {
+                    Animals animal = (Animals) getAnimalFromUUID(UUID.fromString(animalId), player.getWorld());
+                    if (animal != null) {
+                        int exp = config.getAnimals().getInt("Animals." + ownerId + "." + home + "." + animalId + ".Experience");
+                        int level = config.getAnimals().getInt("Animals." + ownerId + "." + home + "." + animalId + ".Level");
+                        List<String> abilities = new ArrayList<>();
+                        if (config.getAnimals().getStringList("Animals." + ownerId + "." + home + "."
+                                + animalId + ".Abilities") != null) {
+                            abilities = config.getAnimals().getStringList("Animals." + ownerId + "." + home + "."
+                                    + animalId + ".Abilities");
+                        }
+                        animal.setMetadata("Home", new FixedMetadataValue(FavFarms.getInstance(), home));
+                        animal.setMetadata("Experience", new FixedMetadataValue(FavFarms.getInstance(), exp));
+                        animal.setMetadata("Level", new FixedMetadataValue(FavFarms.getInstance(), level));
+                        if (!abilities.isEmpty()) {
+                            for (String skill : abilities) {
+                                if (animal.hasMetadata("Abilities")) {
+                                    animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), abilities));
+                                } else {
+                                    animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), skill));
+                                }
+                            }
+                        }
+                        animalsMap.put(player.getUniqueId(), animal.getUniqueId());
+                    } else {
+                        FavFarms.getInstance().getLogger().info("Animal Was Not Found On Server");
+                    }
+                }
+            }
+        }
+    }
+
+    public void saveFarmMail(Player player) {
+        if (!farmMail.get(player.getUniqueId()).isEmpty()) {
+            config.getFarmMail().set("Mail." + player.getUniqueId().toString(), farmMail.get(player.getUniqueId()));
+            config.saveFarmMail();
+        }
+    }
+
+    public void  clearMail(Player player) {
+        List<String> mail = farmMail.get(player.getUniqueId());
+        mail.clear();
+        farmMail.put(player.getUniqueId(), mail);
+        player.sendMessage(ChatColor.DARK_AQUA + "You Have Cleared Your Mail.");
+        saveFarmMail(player);
+    }
+
+    public void loadFarmMail(Player player) {
+        List<String> mail = new ArrayList<>();
+        for (String key : config.getFarmMail().getConfigurationSection("Mail." + player.getUniqueId()).getKeys(false)) {
+            String string = config.getFarmMail().getString("Mail." + key);
+            mail.add(string);
+            farmMail.put(UUID.fromString(key), mail);
         }
     }
 
@@ -1828,7 +2059,7 @@ public class FarmMethods {
         if (config.getPlayerData().get("PlayerData") != null) {
             UUID uuid = player.getUniqueId();
             config.getPlayerData().set("PlayerData." + uuid + ".Level", getLevel(player));
-            config.saveFarms();
+            config.savePlayerData();
         }
     }
 
@@ -1845,7 +2076,7 @@ public class FarmMethods {
         if (config.getPlayerData().get("PlayerData") != null) {
             UUID uuid = player.getUniqueId();
             config.getPlayerData().set("PlayerData." + uuid + ".Experience", getExp(player));
-            config.saveFarms();
+            config.savePlayerData();
         }
     }
 
@@ -1871,6 +2102,19 @@ public class FarmMethods {
             return null;
         }
         return names;
+    }
+
+    public String getMail(Player player) {
+        StringBuilder sb = new StringBuilder();
+        if (farmMail.get(player.getUniqueId()).isEmpty()) {
+            sb.append(ChatColor.DARK_AQUA).append("You Do Not Have Any FarmData Mail");
+        } else {
+            sb.append("Mail: ");
+            for (String mail : farmMail.get(player.getUniqueId())) {
+                sb.append(ChatColor.translateAlternateColorCodes('&', mail)).append("\n");
+            }
+        }
+        return sb.toString();
     }
 
     public String getFirstFarmWithSpace(Player player) {
@@ -2000,6 +2244,95 @@ public class FarmMethods {
     }
     */
 
+    public void assignRandomExperience(Player player, Animals animal, double chance) {
+        Random rand = new Random();
+
+        int min = 0;
+        int max = 0;
+
+        if (chance < 22) {
+            min = 48000;
+            max = 56000;
+        }
+        if (chance < 48 && chance > 22) {
+            min = 36000;
+            max = 48000;
+        }
+        if (chance < 64 && chance > 48) {
+            min = 24000;
+            max = 36000;
+        }
+        if (chance > 64) {
+            min = 8000;
+            max = 24000;
+        }
+
+        int result = rand.nextInt(max - min) + min;
+        animal.setMetadata("Experience", new FixedMetadataValue(FavFarms.getInstance(), result));
+        assignLevel(animal);
+        assignAbility(player, animal);
+        player.sendMessage(ChatColor.DARK_AQUA + "Assigning Values To " + ChatColor.GOLD + animal.getName());
+    }
+
+    public void assignLevel(Animals animal) {
+        if (animal.hasMetadata("Experience")) {
+            Random rand = new Random();
+            int exp = animal.getMetadata("Experience").get(0).asInt();
+            int result = 1;
+            if (exp < 12000) {
+                int min = 1;
+                int max = 12;
+
+                result = rand.nextInt(max - min) + min;
+            }
+            if (exp > 12000 && exp < 24000) {
+                int min = 13;
+                int max = 22;
+
+                result = rand.nextInt(max - min) + min;
+            }
+            if (exp > 24000 && exp < 36000) {
+                int min = 23;
+                int max = 29;
+
+                result = rand.nextInt(max - min) + min;
+            }
+            if (exp > 36000 && exp < 48000) {
+                int min = 30;
+                int max = 47;
+
+                result = rand.nextInt(max - min) + min;
+            }
+            if (exp > 48000) {
+                int min = 48;
+                int max = 56;
+
+                result = rand.nextInt(max - min) + min;
+            }
+            animal.setMetadata("Level", new FixedMetadataValue(FavFarms.getInstance(), result));
+        }
+    }
+
+    public void assignAbility(Player player, Animals animal) {
+        if (animal.hasMetadata("Level")) {
+            int animalLevel = animal.getMetadata("Level").get(0).asInt();
+            List<Abilities> abilities = new ArrayList<>();
+            if (animal instanceof PolarBear) {
+                Abilities snwblr = Abilities.SNOW_BLOWER;
+                Abilities spklr = Abilities.SPRINKLER;
+                if (animalLevel >= 16) {
+                    abilities.add(snwblr);
+                    abilities.add(spklr);
+                    animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), abilities));
+                } else {
+                    animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), spklr));
+                }
+            }
+        } else {
+            player.sendMessage(ChatColor.RED + "Failed To Assign A Level To " + animal.getName());
+        }
+    }
+
     @SuppressWarnings("unused")
     public boolean isFarmEgg(ItemStack stack) {
         Short[] durability = new Short[] {0, 90, 91, 92, 93, 95, 98, 100, 101, 102};
@@ -2083,7 +2416,7 @@ public class FarmMethods {
                                 }
                             }
                             Bukkit.getServer().getPlayer(allPl.getUniqueId()).sendMessage(ChatColor.DARK_AQUA
-                                    + "You Can Now Create A Farm Again");
+                                    + "You Can Now Create A FarmData Again");
                         }
                     }, 0, 20));
                 }

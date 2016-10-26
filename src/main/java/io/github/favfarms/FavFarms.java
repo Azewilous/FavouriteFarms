@@ -1,9 +1,14 @@
 package io.github.favfarms;
 
 import io.github.favfarms.configuration.FarmConfig;
+import io.github.favfarms.configuration.FarmText;
 import io.github.favfarms.executor.FarmExecutor;
+import io.github.favfarms.farm.FarmData;
 import io.github.favfarms.farm.FarmMethods;
+import io.github.favfarms.item.FarmItems;
 import io.github.favfarms.listener.FarmHandler;
+import io.github.favfarms.navigation.FarmNavigation;
+import io.github.favfarms.select.SelectionTool;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.ConsoleCommandSender;
@@ -23,7 +28,13 @@ public class FavFarms extends JavaPlugin {
 
     public ConsoleCommandSender console = Bukkit.getConsoleSender();
 
-    FarmMethods method = FarmMethods.getInstance();
+    FarmMethods method;
+    FarmConfig fConfig;
+    FarmText text;
+    FarmNavigation nav;
+    FarmItems items;
+    FarmData data;
+    SelectionTool tool;
 
     @Override
 	public void onEnable() {
@@ -34,6 +45,14 @@ public class FavFarms extends JavaPlugin {
 
         console.sendMessage(ChatColor.LIGHT_PURPLE + "[Favourite Farms] Initiating - Check Config");
 
+        method = FarmMethods.getInstance();
+        fConfig = FarmConfig.getInstance();
+        text = FarmText.getInstance();
+        nav = FarmNavigation.getInstance();
+        items = FarmItems.getInstance();
+        data = FarmData.getInstance();
+        tool = SelectionTool.getInstance();
+
         setupConfigs();
         safeLoadFile();
 	}
@@ -42,7 +61,13 @@ public class FavFarms extends JavaPlugin {
 	public void onDisable() {
 
         safeSaveFiles();
-        saveConfigs();
+        //saveConfigs();
+        fConfig.saveDefaultFav();
+        fConfig.saveDefaultFarms();
+        fConfig.saveDefaultAnimals();
+        fConfig.saveDefaultPlayerData();
+        fConfig.saveDefaultSavTimers();
+        fConfig.saveDefaultFarmMail();
 
         console.sendMessage(ChatColor.LIGHT_PURPLE + "[Favourite Farms ]  De-Initiating");
         instance = null;
@@ -74,24 +99,26 @@ public class FavFarms extends JavaPlugin {
     }
 
     public void setupConfigs() {
-        FarmConfig fc = FarmConfig.getInstance();
-
-        fc.saveDefaultFav();
-        fc.saveDefaultFarms();
-        fc.saveDefaultAnimals();
-        fc.saveDefaultPlayerData();
-        fc.saveDefaultSavTimers();
+        fConfig.saveDefaultFav();
+        fConfig.saveDefaultFarms();
+        fConfig.saveDefaultAnimals();
+        fConfig.saveDefaultPlayerData();
+        fConfig.saveDefaultSavTimers();
+        fConfig.saveDefaultFarmMail();
     }
 
+    /*
     public void saveConfigs() {
-        FarmConfig fc = FarmConfig.getInstance();
+        FarmConfig fConfig = FarmConfig.getInstance();
 
-        fc.saveFav();
-        fc.saveFarms();
-        fc.saveAnimals();
-        fc.savePlayerData();
-        fc.saveSavTimers();
+        fConfig.saveFav();
+        fConfig.saveFarms();
+        fConfig.saveAnimals();
+        fConfig.savePlayerData();
+        fConfig.saveSavTimers();
+        fConfig.saveFarmMail();
     }
+    */
 
     public static void update() {
         File src = new File("C:\\Users\\Awesome Red\\Documents\\GitHub\\FavouriteFarms\\build\\libs" +

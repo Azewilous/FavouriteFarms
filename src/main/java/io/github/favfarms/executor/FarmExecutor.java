@@ -174,6 +174,12 @@ public class FarmExecutor implements CommandExecutor {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
                                         + FarmPermissions.COMMAND_FARM_ANIMALS.toString());
                             }
+                        } else if (args[0].equalsIgnoreCase("mail")) {
+                            if (args[1].equalsIgnoreCase("check")) {
+                                player.sendMessage(method.getMail(player));
+                            } else if (args[1].equalsIgnoreCase("clear")) {
+                                method.clearMail(player);
+                            }
                         } else {
                             player.sendMessage(ChatColor.DARK_AQUA + "Not A Valid Farm Plugin Command");
                         }

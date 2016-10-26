@@ -3,16 +3,15 @@ package io.github.favfarms.listener;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.Selection;
 import io.github.favfarms.FavFarms;
+import io.github.favfarms.ability.AbilityDisplay;
+import io.github.favfarms.ability.AbilityItems;
 import io.github.favfarms.configuration.FarmConfig;
 import io.github.favfarms.farm.FarmMethods;
 import io.github.favfarms.item.FarmItems;
 import io.github.favfarms.permission.FarmPermissions;
 import io.github.favfarms.select.SelectionTool;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -50,6 +49,7 @@ public class FarmHandler implements Listener {
     SelectionTool tool = SelectionTool.getInstance();
     FarmItems FItems = FarmItems.getInstance();
     FarmConfig config = FarmConfig.getInstance();
+    AbilityItems AItems = AbilityItems.getInstance();
 
     HashMap<Player, Location> blockLocFirst = new HashMap<>();
     HashMap<Player, Location> blockLocSecond = new HashMap<>();
@@ -66,6 +66,22 @@ public class FarmHandler implements Listener {
         ItemStack resetTool = FItems.createResetCatcherCooldown();
         ItemStack increaseChanceItem = FItems.createChanceModifier(player);
         ItemStack item = event.getItem();
+        if (item == null) {
+            if (event.getAction() == Action.LEFT_CLICK_AIR) {
+                if (method.hasFarm(player.getUniqueId())) {
+                    for (Animals animal : method.toggleSnowBlower.keySet()) {
+                        if (method.isToggledSnowBlower(animal)) {
+                            AbilityDisplay.getInstance().calculateLine(animal, player);
+                        }
+                    }
+                    for (Animals animal : method.toggleSprinkler.keySet()) {
+                        if (method.isToggledSprinkler(animal)) {
+                            AbilityDisplay.getInstance().calculateLine(animal, player, Particle.WATER_DROP);
+                        }
+                    }
+                }
+            }
+        }
         if (item != null) {
             if (item.isSimilar(resetTool)) {
                 if (item.getItemMeta().getDisplayName().equalsIgnoreCase(resetTool.getItemMeta().getDisplayName())) {
@@ -206,12 +222,15 @@ public class FarmHandler implements Listener {
     public void playerJoinServer(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (method.hasFarm(player.getUniqueId())) {
-            if (config.getAnimals().getString("Animals") != null) {
+            if (config.getAnimals().get("Animals") != null) {
                 method.loadAnimals(player);
             }
-            if (config.getFarms().getString("Farms") != null) {
+            if (config.getFarms().get("Farms") != null) {
                 method.loadFarmExp(player);
                 method.loadFarmLevel(player);
+            }
+            if (config.getFarmMail().get("Mail") != null) {
+                method.loadFarmMail(player);
             }
         }
     }
@@ -221,9 +240,11 @@ public class FarmHandler implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         Player player = (Player) event.getPlayer();
         Inventory inv = event.getInventory();
-        if (inv.getName().equalsIgnoreCase(method.getPlayerFarmsInv(player).getName())) {
-            if (method.isInTransfer(player)) {
-                method.cancelTransfer(player);
+        if (method.hasFarm(player.getUniqueId())) {
+            if (inv.getName().equalsIgnoreCase(method.getPlayerFarmsInv(player).getName())) {
+                if (method.isInTransfer(player)) {
+                    method.cancelTransfer(player);
+                }
             }
         }
     }
@@ -246,7 +267,7 @@ public class FarmHandler implements Listener {
                             }
                         }
                     }
-                    if (method.isAnimalInvItem(player, clicked)) {
+                    if (method.isAnimalInvItem(clicked)) {
                         if (clicked.isSimilar(FItems.createReturnItem((Animals) method.getAnimalFromItem(clicked, world)))) {
                             event.setCancelled(true);
                             if (inventory.getName().equals(FarmMethods.getInstance().getAnimalInv(player, clicked).getName())) {
@@ -263,52 +284,67 @@ public class FarmHandler implements Listener {
                         } else if (inventory.getName().equals(method.getAnimalInv(player, clicked).getName())) {
                             event.setCancelled(true);
                             //Teleports Animal To Player
-                            if (clicked.isSimilar(FItems.createTeleportHereItem((Animals)
-                                    method.getAnimalFromItem(clicked, world)))) {
+                            if (clicked.isSimilar(FItems.createTeleportHereItem((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
                                 method.teleportAnimalToPlayer(player, clicked);
                             }
                             //Disables Animals AI
-                            if (clicked.isSimilar(FItems.createFreezeAnimalItem((Animals)
-                                    method.getAnimalFromItem(clicked, world)))) {
+                            if (clicked.isSimilar(FItems.createFreezeAnimalItem((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
                                 method.freezeAnimal(clicked, player);
                             }
                             //Opens The Animals Modification Inventory
-                            if (clicked.isSimilar(FItems.createModificationItem((Animals)
-                                    method.getAnimalFromItem(clicked, world)))) {
+                            if (clicked.isSimilar(FItems.createModificationItem((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
                                 method.openModifyInv(player, clicked);
                             }
                             //Tames An Animal
-                            if (clicked.isSimilar(FItems.createTameItem((Animals)
-                                    method.getAnimalFromItem(clicked, world)))) {
+                            if (clicked.isSimilar(FItems.createTameItem((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
                                 if (method.hasTameUsages(player)) {
                                     method.tameAnimal(clicked, player);
                                     method.openAnimalInv(player, clicked);
                                 }
                             }
                             //Replenishes A Sheep's Fur
-                            if (clicked.isSimilar(FItems.createSheepFurReset((Animals)
-                                    method.getAnimalFromItem(clicked, world)))) {
+                            if (clicked.isSimilar(FItems.createSheepFurReset((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
                                 if (method.hasReplenishUsages(player)) {
                                     method.resetSheepFur(clicked, world);
                                 }
                             }
                             //Transfer Animal To Another Farm
-                            if ((clicked.isSimilar(FItems.createTransferBetweenFarms((Animals)
-                                    method.getAnimalFromItem(clicked, world), player)))) {
+                            if ((clicked.isSimilar(FItems.createTransferBetweenFarms((Animals) method
+                                    .getAnimalFromItem(clicked, world), player)))) {
                                 method.setInTransfer(player, clicked);
                                 method.openPlayerFarmsInv(player);
                             }
                             //Teleports An Animal Home IE. Player Spawn
-                            if (clicked.isSimilar(FItems.createHomeItem((Animals)
-                                    method.getAnimalFromItem(clicked, world)))) {
+                            if (clicked.isSimilar(FItems.createHomeItem((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
                                 method.teleportAnimalHome(player, clicked);
                             }
                             //Teleports Player To An Animal
-                            if (clicked.isSimilar(FItems.createTeleportToItem((Animals)
-                                    method.getAnimalFromItem(clicked, world)))) {
+                            if (clicked.isSimilar(FItems.createTeleportToItem((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
                                 method.teleportPlayerToAnimal(player, clicked);
                             }
-                        } else if (inventory.getName().equals(method.getModifyInv(player, clicked).getName())) {
+                            //Opens Animals Abilities
+                            if (clicked.isSimilar(FItems.createAbilityListItem((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
+                                method.openAbilityInv(player, clicked);
+                            }
+                            //Set An Animal To Follow Player
+                            if (clicked.isSimilar(FItems.createAnimalFollowItem((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
+                                if (method.isFollowing(player, (Animals) method.getAnimalFromItem(clicked, world))) {
+                                    method.removeFollowing(player, (Animals) method.getAnimalFromItem(clicked, world));
+                                } else {
+                                    method.setFollowing(player, (Animals) method.getAnimalFromItem(clicked, world));
+                                }
+                            }
+                        } else if (method.getModifyInv(player, clicked) != null && inventory.getName()
+                                .equals(method.getModifyInv(player, clicked).getName())) {
                             event.setCancelled(true);
                             if (method.hasStyleChangeUsages(player)) {
                                 //Looks Confusing, It Just Runs A Lot Of Checks To Prevent Bugs
@@ -341,6 +377,15 @@ public class FarmHandler implements Listener {
                             } else {
                                 player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have Any Style Change Usages");
                             }
+                        } else if (inventory.getName().equals(method.getAbilityInv(player, clicked).getName())) {
+                            event.setCancelled(true);
+                            if (clicked.isSimilar(AItems.createSnowBlowerDisplay((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
+                                method.setToggleSnowBlower(player, (Animals) method.getAnimalFromItem(clicked, world));
+                            } else if (clicked.isSimilar(AItems.createSprinklerDisplay((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
+                                method.setToggleSprinkler(player, (Animals) method.getAnimalFromItem(clicked, world));
+                            }
                         }
                     }
                 }
@@ -350,13 +395,10 @@ public class FarmHandler implements Listener {
 
     @SuppressWarnings("unused")
     @EventHandler
-    public void entityDeathEvent(EntityDeathEvent event) {
+    public void entityDeath(EntityDeathEvent event) {
         Entity entity = event.getEntity();
         if (method.isFarmAnimal(entity.getUniqueId())) {
-            if (entity instanceof Animals) {
-                Animals animal = (Animals) entity;
-                method.removeFarmAnimal(animal, method.getOwnerFromAnimal(animal.getUniqueId()));
-            }
+            method.removeFarmAnimal((Animals) entity);
         }
     }
 

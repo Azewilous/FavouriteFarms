@@ -32,7 +32,6 @@ Size:
   Amount: 150
 #Increment Amount Per Level
   Increment: 10
-#Catch Rate For Animals
 #Defualt Farm Animal Type/Style Change Usages A Player Starts With
 Usages:
 #Defualt Amount Of Tames A Player Receives
@@ -41,6 +40,7 @@ Usages:
   FurReset: 3
 #Defualt Amount Of Ocelot/Horse Style Change Usages A Player Receives
   StyleSets: 4
+#Defualt Catch Rate For Each Animal, Max 100
 CatchRate:
   Chicken: 78.6
   Cow: 64.6

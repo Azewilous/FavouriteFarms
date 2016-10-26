@@ -9,13 +9,13 @@ import java.util.UUID;
 /**
  * FavFarms Created by Awesome Red on 7/15/2016.
  */
-class Farm {
+public class FarmData {
 
-    private Farm() {}
+    private FarmData() {}
 
-    private static Farm instance = new Farm();
+    private static FarmData instance = new FarmData();
 
-    public static Farm getInstance() {
+    public static FarmData getInstance() {
         return instance;
     }
 

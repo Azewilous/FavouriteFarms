@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.MetadataValue;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -28,7 +29,6 @@ public class FarmItems {
     }
 
     FarmConfig config = FarmConfig.getInstance();
-    FarmMethods method = FarmMethods.getInstance();
 
     public ItemStack createEgg(Animals animal) {
         ItemStack egg = new ItemStack(Material.MONSTER_EGG, 1);
@@ -46,6 +46,15 @@ public class FarmItems {
         lore.add(ChatColor.BLUE + "Health: " + animal.getHealth());
         lore.add(ChatColor.BLUE + "Breedable: " + animal.canBreed());
         lore.add(ChatColor.GRAY + "Home: " + animal.getMetadata("Home").get(0).asString());
+        lore.add(ChatColor.GOLD + "Experience: " + animal.getMetadata("Experience").get(0).asInt());
+        lore.add(ChatColor.GOLD + "Level: " + animal.getMetadata("Level").get(0).asInt());
+        int counter = 0;
+        if (animal.hasMetadata("Abilities")) {
+            for (String skill : FarmMethods.getInstance().splitAbilitiesList(animal)) {
+                lore.add(ChatColor.GREEN + "Ability (" + counter + ") : " + skill);
+                counter++;
+            }
+        }
         lore.add(ChatColor.GRAY + "UUID: " + animal.getUniqueId());
         eggMeta.setLore(lore);
         egg.setItemMeta(eggMeta);
@@ -178,7 +187,7 @@ public class FarmItems {
         ItemMeta freezeMeta = freeze.getItemMeta();
         freezeMeta.setDisplayName(ChatColor.GREEN + "Freeze " + animal.getName());
         List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.AQUA + "Frozen: " + animal.hasAI());
+        lore.add(ChatColor.AQUA + "HasAI: " + animal.hasAI());
         lore.add(ChatColor.GRAY + "UUID: " + animal.getUniqueId());
         freezeMeta.setLore(lore);
         freeze.setItemMeta(freezeMeta);
@@ -321,7 +330,7 @@ public class FarmItems {
     public ItemStack createTameUsages(Player player) {
         ItemStack usage = new ItemStack(Material.GHAST_TEAR, 1);
         ItemMeta usageMeta = usage.getItemMeta();
-        Integer amount = method.getTameUsages(player);
+        Integer amount = FarmMethods.getInstance().getTameUsages(player);
         usageMeta.setDisplayName(ChatColor.GOLD + "(" + amount + ") " + ChatColor.GREEN + "Tame Usages");
         usage.setItemMeta(usageMeta);
         return usage;
@@ -330,7 +339,7 @@ public class FarmItems {
     public ItemStack createFurResetUsages(Player player) {
         ItemStack usage = new ItemStack(Material.GHAST_TEAR, 1);
         ItemMeta usageMeta = usage.getItemMeta();
-        Integer amount = method.getReplenishUsage(player);
+        Integer amount = FarmMethods.getInstance().getReplenishUsage(player);
         usageMeta.setDisplayName(ChatColor.GOLD + "(" + amount + ") " + ChatColor.GREEN + "Fur Reset Usages");
         usage.setItemMeta(usageMeta);
         return usage;
@@ -339,7 +348,7 @@ public class FarmItems {
     public ItemStack createStyleSetUsages(Player player) {
         ItemStack usage = new ItemStack(Material.GHAST_TEAR, 1);
         ItemMeta usageMeta = usage.getItemMeta();
-        Integer amount = method.getStyleChangeUsage(player);
+        Integer amount = FarmMethods.getInstance().getStyleChangeUsage(player);
         usageMeta.setDisplayName(ChatColor.GOLD + "(" + amount + ") " + ChatColor.GREEN + "Style Set Usages");
         usage.setItemMeta(usageMeta);
         return usage;
@@ -367,6 +376,34 @@ public class FarmItems {
         farmListMeta.setLore(lore);
         farmList.setItemMeta(farmListMeta);
         return farmList;
+    }
+
+    public ItemStack createAbilityListItem(Animals animal) {
+        ItemStack skillList = new ItemStack(Material.STAINED_GLASS, 1, (byte) 3);
+        ItemMeta skillListMeta = skillList.getItemMeta();
+        skillListMeta.setDisplayName(ChatColor.DARK_AQUA +  animal.getName() + " Abilities");
+        List<String> lore = new ArrayList<>();
+        int counter = 0;
+        if (animal.hasMetadata("Ability")) {
+            for (MetadataValue skill : animal.getMetadata("Ability")) {
+                lore.add(ChatColor.GREEN + "Ability (" + counter + ")" + ": " + skill.asString());
+            }
+        }
+        lore.add(ChatColor.DARK_GRAY + "UUID: " + animal.getUniqueId());
+        skillListMeta.setLore(lore);
+        skillList.setItemMeta(skillListMeta);
+        return skillList;
+    }
+
+    public ItemStack createAnimalFollowItem(Animals animal) {
+        ItemStack follow = new ItemStack(Material.REDSTONE, 1);
+        ItemMeta followMeta = follow.getItemMeta();
+        followMeta.setDisplayName(ChatColor.DARK_AQUA + "Set " + animal.getName() + " To Follow You");
+        List<String> lore = new ArrayList<>();
+        lore.add(ChatColor.DARK_GRAY + "UUID: " + animal.getUniqueId());
+        followMeta.setLore(lore);
+        follow.setItemMeta(followMeta);
+        return follow;
     }
 
     @SuppressWarnings("deprecation")

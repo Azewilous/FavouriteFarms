@@ -1,5 +1,7 @@
 package io.github.favfarms.farm;
 
+import io.github.favfarms.ability.Abilities;
+import io.github.favfarms.ability.AbilityItems;
 import io.github.favfarms.item.FarmItems;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -34,7 +36,7 @@ public class FarmInventory {
 
     public Inventory createFarmInventory(Player player, List<Animals> animals) {
         int count = 0;
-        Inventory farmInv = Bukkit.createInventory(player, 54, ChatColor.DARK_AQUA + player.getName() + "'s Farm");
+        Inventory farmInv = Bukkit.createInventory(player, 54, ChatColor.DARK_AQUA + player.getName() + "'s FarmData");
         for (Animals animal : animals) {
             farmInv.setItem(count, FarmMethods.getInstance().getItemForAnimal(animal));
             count++;
@@ -45,7 +47,7 @@ public class FarmInventory {
     @SuppressWarnings("deprecation")
     public Inventory createAnimalInventory(Player player, Animals animal) {
         if (animal != null) {
-            Inventory animalInv = Bukkit.createInventory(player, 9, ChatColor.GRAY + animal.getName() + "'s Inventory");
+            Inventory animalInv = Bukkit.createInventory(player, 18, ChatColor.GRAY + animal.getName() + "'s Inventory");
             animalInv.setItem(0, FarmItems.getInstance().createTeleportHereItem(animal));
             animalInv.setItem(2, FarmItems.getInstance().createHomeItem(animal));
             animalInv.setItem(3, FarmItems.getInstance().createModificationItem(animal));
@@ -53,6 +55,8 @@ public class FarmInventory {
             animalInv.setItem(6, FarmItems.getInstance().createTeleportToItem(animal));
             animalInv.setItem(7, FarmItems.getInstance().createTransferBetweenFarms(animal, player));
             animalInv.setItem(8, FarmItems.getInstance().createReturnItem(animal));
+            animalInv.setItem(13, FarmItems.getInstance().createAbilityListItem(animal));
+            animalInv.setItem(11, FarmItems.getInstance().createAnimalFollowItem(animal));
             if (animal instanceof Sheep) {
                 animalInv.setItem(4, FarmItems.getInstance().createSheepFurReset(animal));
                 animalInv.setItem(1, FarmItems.getInstance().createFurResetUsages(player));
@@ -132,6 +136,24 @@ public class FarmInventory {
             return modifyInv;
         }
         return null;
+    }
+
+    public Inventory createAnimalAbilitiesInventory(Player player, Animals animal) {
+        Inventory abilityInv = Bukkit.createInventory(player, 45, ChatColor.BLUE + animal.getName() + " Abilities");
+        if (animal.hasMetadata("Abilities")) {
+            int counter = 0;
+            for (String skill : FarmMethods.getInstance().splitAbilitiesList(animal)) {
+                if (skill.equalsIgnoreCase(Abilities.SPRINKLER.toString())) {
+                    abilityInv.setItem(counter, AbilityItems.getInstance().createSprinklerDisplay(animal));
+                    counter = counter + 3;
+                }
+                if (skill.equalsIgnoreCase(Abilities.SNOW_BLOWER.toString())) {
+                    abilityInv.setItem(counter, AbilityItems.getInstance().createSnowBlowerDisplay(animal));
+                    counter = counter + 3;
+                }
+            }
+        }
+        return abilityInv;
     }
 
 }

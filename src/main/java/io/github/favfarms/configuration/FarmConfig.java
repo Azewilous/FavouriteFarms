@@ -37,6 +37,9 @@ public class FarmConfig {
     public static FileConfiguration savTimers = null;
     public static File savTimersFile = null;
 
+    public static FileConfiguration farmMail = null;
+    public static File farmMailFile = null;
+
     //Farms
     public FileConfiguration getFarms() {
         if (farms == null) {
@@ -216,6 +219,41 @@ public class FarmConfig {
         }
         if (!savTimersFile.exists()) {
             FavFarms.getInstance().saveResource("sav.yml", false);
+        }
+    }
+
+    //Farm Mail
+    public FileConfiguration getFarmMail() {
+        if (farmMail == null) {
+            reloadFarmMail();
+        }
+        return farmMail;
+    }
+
+    public void saveFarmMail() {
+        if (farmMail != null || farmMailFile != null) {
+            try {
+                getFarmMail().save(farmMailFile);
+            } catch (Exception ex) {
+                Bukkit.getServer().getLogger().info(ChatColor.DARK_PURPLE + "Farm Mail Could Not Be Saved "
+                        + ex);
+            }
+        }
+    }
+
+    public void reloadFarmMail() {
+        if (farmMailFile == null) {
+            farmMailFile = new File(FavFarms.getInstance().getDataFolder(), "mail.yml");
+        }
+        farmMail = YamlConfiguration.loadConfiguration(farmMailFile);
+    }
+
+    public void saveDefaultFarmMail() {
+        if (farmMailFile == null) {
+            farmMailFile = new File(FavFarms.getInstance().getDataFolder(), "mail.yml");
+        }
+        if (!farmMailFile.exists()) {
+            FavFarms.getInstance().saveResource("mail.yml", false);
         }
     }
 
