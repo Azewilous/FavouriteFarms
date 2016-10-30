@@ -36,6 +36,10 @@ permissions:
     description: Access To Create A Farm For Another Player
   favfarms.farm.remove:
     description: Access To Remove A Farm
+  favfarms.home.self:
+    description: Access To Teleport To Your Farms Spawn
+  favfarms.home.other:
+    description: Access To Teleport To Another Farms Spawn
   favfarms.info.self:
     description: Access To Get Farm Info For Self
   favfarms.info.other:
@@ -64,6 +68,9 @@ permissions:
     description: Access To Add To The Amount Of Replenishes A Player Has
   favfarms.add.stylechanges:
     description: Access To Add To The Amount Of StyleChanges A Player Has
+  favfarms.check.animals:
+    description: Access To Check If An Animal Belongs To A Farm
+    default: true
   favfarms.bypass.area:
     description: Access To Create Farm On Top of Claims/Regions
   favfarms.bypass.size.limit:

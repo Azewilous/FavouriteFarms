@@ -121,15 +121,15 @@ public class FavFarms extends JavaPlugin {
     */
 
     public static void update() {
-        File src = new File("C:\\Users\\Awesome Red\\Documents\\GitHub\\FavouriteFarms\\build\\libs" +
-                "\\FavouriteFarms-1.0-SNAPSHOT.jar");
-        File dest = new File("C:\\Users\\Awesome Red\\Desktop\\SpigotDev\\Spigot Server\\plugins" +
-                "\\FavouriteFarms-1.0-SNAPSHOT.jar");
         try {
+            File src = new File("C:\\Users\\Awesome Red\\Documents\\GitHub\\FavouriteFarms\\build\\libs" +
+                    "\\FavouriteFarms-1.0-SNAPSHOT.jar");
+            File dest = new File(FavFarms.getInstance().getClass().getProtectionDomain().getCodeSource().getLocation()
+                    .toURI().getPath() + "\\FavouriteFarms-1.0-SNAPSHOT.jar");
+
             copyFileUsingChannel(src, dest);
-            Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "reload");
-            Bukkit.getServer().broadcastMessage("Updated 15");
-        } catch (IOException ex) {
+            Bukkit.getServer().broadcastMessage(dest.toString());
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
@@ -141,7 +141,7 @@ public class FavFarms extends JavaPlugin {
             sourceChannel = new FileInputStream(source).getChannel();
             destChannel = new FileOutputStream(dest).getChannel();
             destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
-        }finally{
+        } finally {
             if (sourceChannel != null) {
                 sourceChannel.close();
             }

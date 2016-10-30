@@ -40,7 +40,7 @@ import static org.bukkit.Bukkit.getServer;
  * FavFarms Created by Awesome Red on 8/24/2016.
  */
 public class FarmMethods {
-//Fix ClassDefNotFoundWGPRRG
+
     public FarmMethods() {}
 
     public static FarmMethods instance = new FarmMethods();
@@ -114,6 +114,9 @@ public class FarmMethods {
 
     //FarmData Mail
     HashMap<UUID, List<String>> farmMail = new HashMap<>();
+
+    //Animal Info Toggle
+    List<Player> animalInfo = new ArrayList<>();
 
     public void createFarmData(Player player, String farmName) {
         if (player.hasPermission(FarmPermissions.BYPASS_FARM_CREATE_COOLDOWN.toString()) || player.isOp()) {
@@ -848,7 +851,7 @@ public class FarmMethods {
             String home = animal.getMetadata("Home").get(0).asString();
             if (player.isOnline()) {
                 animalsMap.remove(player.getUniqueId(), animalUUID);
-                config.getAnimals().get("Animals." + player.getUniqueId() + "." + home + "." + animalUUID, null);
+                config.getAnimals().set("Animals." + player.getUniqueId() + "." + home + "." + animalUUID, null);
                 saveAnimals(player);
                 player.sendMessage(ChatColor.DARK_AQUA + animal.getName() + " Has Been Removed From FarmData");
             } else {
@@ -856,7 +859,7 @@ public class FarmMethods {
                 mail.add(string);
                 animalsMap.remove(player.getUniqueId(), animalUUID);
                 farmMail.put(player.getUniqueId(), mail);
-                config.getAnimals().get("Animals." + player.getUniqueId() + "." + home + "." + animalUUID, null);
+                config.getAnimals().set("Animals." + player.getUniqueId() + "." + home + "." + animalUUID, null);
                 saveAnimals(player);
                 saveFarmMail(player);
             }
@@ -942,6 +945,25 @@ public class FarmMethods {
             }
         } else
             getPlayerFromUUID(uuid).sendMessage(ChatColor.DARK_AQUA + "This Player Does Not Have A FarmData");
+    }
+
+    public void toggleAnimalInfo(Player player) {
+        if (animalInfo.contains(player)) {
+            animalInfo.remove(player);
+            player.sendMessage(ChatColor.DARK_AQUA + "Toggled Animal Checker Off");
+        } else {
+            animalInfo.add(player);
+            player.sendMessage(ChatColor.DARK_AQUA + "Toggled Animal Checker On");
+        }
+    }
+
+    public boolean isCheckingAnimals(Player player) {
+        return animalInfo.contains(player);
+    }
+
+    public void checkAnimal(Player player, Animals animal) {
+        String msg = ChatColor.DARK_AQUA + "Is Farm Animal: ";
+        player.sendMessage(msg + ChatColor.GOLD + isFarmAnimal(animal.getUniqueId()));
     }
 
     public Inventory getPlayerFarmsInv(Player player) {
@@ -1699,6 +1721,39 @@ public class FarmMethods {
         return rand.nextInt(most - least) + least;
     }
 
+    public void goToFarmHome(Player player, String name) {
+        UUID playerUUID = player.getUniqueId();
+        if (hasFarm(playerUUID)) {
+            if (farmExist(name)) {
+                if (isFarmOwner(player, name)) {
+                    Location spawn = getFarmSpawn(player, name);
+                    player.teleport(spawn);
+                    player.sendMessage(ChatColor.DARK_AQUA + "You Have Teleported To " + name + "'s Farm Spawn");
+                } else {
+                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have Access To This Farm");
+                }
+            } else {
+                player.sendMessage(ChatColor.DARK_AQUA + "The Farm " + ChatColor.GOLD + name
+                        + ChatColor.DARK_AQUA + " Does Not Exist");
+            }
+        }
+    }
+
+    public void goToFarmOther(Player player, Player other, String name) {
+        UUID playerUUID = other.getUniqueId();
+        if (hasFarm(playerUUID)) {
+            if (farmExist(name)) {
+                Location spawn = getFarmSpawn(other, name);
+                player.teleport(spawn);
+                player.sendMessage(ChatColor.DARK_AQUA + "You Have Teleported To " + ChatColor.GOLD + other.getName()
+                        + ChatColor.DARK_AQUA + "'s Farm " + ChatColor.GOLD + name + ChatColor.DARK_AQUA + " Spawn");
+            } else {
+                player.sendMessage(ChatColor.DARK_AQUA + "The Farm " + ChatColor.GOLD + name
+                        + ChatColor.DARK_AQUA + " Does Not Exist");
+            }
+        }
+    }
+
     public void setToggleSnowBlower(Player player, Animals animal) {
         if (toggleSnowBlower.containsKey(animal)) {
             if (toggleSnowBlower.get(animal)) {
@@ -1937,6 +1992,10 @@ public class FarmMethods {
         return caught.get(animal);
     }
 
+    public boolean worldContainsAnimal(Animals animal, World world) {
+        return world.getEntities().contains(animal);
+    }
+
     /*
     public boolean isObtainable(Animals animal) {
         return obtainable.get(animal);
@@ -1955,28 +2014,32 @@ public class FarmMethods {
         if (animalsMap != null) {
             if (hasFarm(player.getUniqueId())) {
                 for (UUID ownerId : animalsMap.keySet()) {
-                    for (UUID animalIds : animalsMap.get(ownerId)) {
-                        Animals animal = (Animals) getAnimalFromUUID(animalIds, player.getWorld());
-                        String home = animal.getMetadata("Home").get(0).asString();
-                        Integer exp = animal.getMetadata("Experience").get(0).asInt();
-                        Integer level = animal.getMetadata("Level").get(0).asInt();
-                        List<String> listAbility = new ArrayList<>();
-                        for (String ability : splitAbilitiesList(animal)) {
-                            listAbility.add(ability);
+                    for (UUID animalId : animalsMap.get(ownerId)) {
+                        Animals animal = (Animals) getAnimalFromUUID(animalId, player.getWorld());
+                        if (worldContainsAnimal(animal, player.getWorld())) {
+                            String home = animal.getMetadata("Home").get(0).asString();
+                            Integer exp = animal.getMetadata("Experience").get(0).asInt();
+                            Integer level = animal.getMetadata("Level").get(0).asInt();
+                            List<String> listAbility = new ArrayList<>();
+                            for (String ability : splitAbilitiesList(animal)) {
+                                listAbility.add(ability);
+                            }
+                            config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                    .toString() + ".Name", animal.getName());
+                            config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                    .toString() + ".Home", home);
+                            config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                    .toString() + ".Experience", exp);
+                            config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                    .toString() + ".Level", level);
+                            config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                    .toString() + ".Abilities", listAbility);
+                            config.saveAnimals();
+                        } else {
+                            removeFarmAnimal(animal);
                         }
-                        config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
-                                .toString() + ".Name", animal.getName());
-                        config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
-                                .toString() + ".Home", home);
-                        config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
-                                .toString() + ".Experience", exp);
-                        config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
-                                .toString() + ".Level", level);
-                        config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
-                                .toString() + ".Abilities", listAbility);
                     }
                 }
-                config.saveAnimals();
             }
         }
     }
@@ -2000,31 +2063,37 @@ public class FarmMethods {
             for (String home : config.getAnimals().getConfigurationSection("Animals." + ownerId).getKeys(false)) {
                 for (String animalId : config.getAnimals().getConfigurationSection("Animals." + ownerId + "."
                         + home).getKeys(false)) {
-                    Animals animal = (Animals) getAnimalFromUUID(UUID.fromString(animalId), player.getWorld());
-                    if (animal != null) {
-                        int exp = config.getAnimals().getInt("Animals." + ownerId + "." + home + "." + animalId + ".Experience");
-                        int level = config.getAnimals().getInt("Animals." + ownerId + "." + home + "." + animalId + ".Level");
-                        List<String> abilities = new ArrayList<>();
-                        if (config.getAnimals().getStringList("Animals." + ownerId + "." + home + "."
-                                + animalId + ".Abilities") != null) {
-                            abilities = config.getAnimals().getStringList("Animals." + ownerId + "." + home + "."
-                                    + animalId + ".Abilities");
-                        }
-                        animal.setMetadata("Home", new FixedMetadataValue(FavFarms.getInstance(), home));
-                        animal.setMetadata("Experience", new FixedMetadataValue(FavFarms.getInstance(), exp));
-                        animal.setMetadata("Level", new FixedMetadataValue(FavFarms.getInstance(), level));
-                        if (!abilities.isEmpty()) {
-                            for (String skill : abilities) {
-                                if (animal.hasMetadata("Abilities")) {
-                                    animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), abilities));
-                                } else {
-                                    animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), skill));
+                    if (getAnimalFromUUID(UUID.fromString(animalId), player.getWorld()) != null) {
+                        Animals animal = (Animals) getAnimalFromUUID(UUID.fromString(animalId), player.getWorld());
+                        if (worldContainsAnimal(animal, player.getWorld())) {
+                            int exp = config.getAnimals().getInt("Animals." + ownerId + "." + home + "." + animalId + ".Experience");
+                            int level = config.getAnimals().getInt("Animals." + ownerId + "." + home + "." + animalId + ".Level");
+                            List<String> abilities = new ArrayList<>();
+                            if (config.getAnimals().getStringList("Animals." + ownerId + "." + home + "."
+                                    + animalId + ".Abilities") != null) {
+                                abilities = config.getAnimals().getStringList("Animals." + ownerId + "." + home + "."
+                                        + animalId + ".Abilities");
+                            }
+                            animal.setMetadata("Home", new FixedMetadataValue(FavFarms.getInstance(), home));
+                            animal.setMetadata("Experience", new FixedMetadataValue(FavFarms.getInstance(), exp));
+                            animal.setMetadata("Level", new FixedMetadataValue(FavFarms.getInstance(), level));
+                            if (!abilities.isEmpty()) {
+                                for (String skill : abilities) {
+                                    if (animal.hasMetadata("Abilities")) {
+                                        animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), abilities));
+                                    } else {
+                                        animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), skill));
+                                    }
                                 }
                             }
+                            animalsMap.put(player.getUniqueId(), animal.getUniqueId());
+                        } else {
+                            FavFarms.getInstance().getLogger().info("Animal Was Not Found In This World");
+                            removeAnimalDirect(UUID.fromString(ownerId), UUID.fromString(animalId), home);
                         }
-                        animalsMap.put(player.getUniqueId(), animal.getUniqueId());
                     } else {
-                        FavFarms.getInstance().getLogger().info("Animal Was Not Found On Server");
+                        FavFarms.getInstance().getLogger().info("Animal Returned Null");
+                        removeAnimalDirect(UUID.fromString(ownerId), UUID.fromString(animalId), home);
                     }
                 }
             }
@@ -2125,6 +2194,14 @@ public class FarmMethods {
             }
         }
         return farmsWithEmptySpace.get(0);
+    }
+
+    public void removeAnimalDirect(UUID playerUUID, UUID animalUUID, String home) {
+        String name = config.getAnimals().getString("Animals." + playerUUID + "." + home + "." + animalUUID + ".Name");
+        config.getAnimals().set("Animals." + playerUUID + "." + home + "." + animalUUID, null);
+        getPlayerFromUUID(playerUUID).sendMessage(ChatColor.DARK_AQUA + "Your Animal " + ChatColor.GOLD + name
+                + ChatColor.DARK_AQUA + " Has Disappeared From This World");
+        config.saveAnimals();
     }
 
     public Vector getMinimum(Location loc) {
@@ -2320,7 +2397,7 @@ public class FarmMethods {
             if (animal instanceof PolarBear) {
                 Abilities snwblr = Abilities.SNOW_BLOWER;
                 Abilities spklr = Abilities.SPRINKLER;
-                if (animalLevel >= 16) {
+                if (animalLevel >= 32) {
                     abilities.add(snwblr);
                     abilities.add(spklr);
                     animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), abilities));

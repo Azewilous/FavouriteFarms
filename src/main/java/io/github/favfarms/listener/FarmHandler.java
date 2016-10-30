@@ -22,8 +22,10 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -59,6 +61,22 @@ public class FarmHandler implements Listener {
 
     @SuppressWarnings("unused")
     @EventHandler
+    public void playerInteractEntity(PlayerInteractEntityEvent event) {
+        Player player = event.getPlayer();
+        Entity entity = event.getRightClicked();
+
+        if (event.getHand() == EquipmentSlot.HAND) {
+            if (entity instanceof Animals) {
+                Animals animal = (Animals) entity;
+                if (method.isCheckingAnimals(player)) {
+                    method.checkAnimal(player, animal);
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         ItemStack selTool = tool.getTool();
@@ -71,102 +89,107 @@ public class FarmHandler implements Listener {
                 if (method.hasFarm(player.getUniqueId())) {
                     for (Animals animal : method.toggleSnowBlower.keySet()) {
                         if (method.isToggledSnowBlower(animal)) {
-                            AbilityDisplay.getInstance().calculateLine(animal, player);
+                            AbilityDisplay.getInstance().calculateLine(animal, player, Particle.SNOWBALL);
                         }
                     }
                     for (Animals animal : method.toggleSprinkler.keySet()) {
                         if (method.isToggledSprinkler(animal)) {
-                            AbilityDisplay.getInstance().calculateLine(animal, player, Particle.WATER_DROP);
+                            AbilityDisplay.getInstance().calculateLine(animal, player, Particle.DRAGON_BREATH);
                         }
                     }
                 }
             }
         }
         if (item != null) {
-            if (item.isSimilar(resetTool)) {
-                if (item.getItemMeta().getDisplayName().equalsIgnoreCase(resetTool.getItemMeta().getDisplayName())) {
-                    if (event.getAction() == Action.RIGHT_CLICK_AIR) {
-                        method.removeCatcherCooldown(player);
-                    }
-                }
-            }
-            if (item.isSimilar(increaseChanceItem)) {
-                if (item.getItemMeta().getDisplayName().equalsIgnoreCase(increaseChanceItem.getItemMeta().getDisplayName())) {
-                    if (event.getAction() == Action.RIGHT_CLICK_AIR) {
-                        method.increaseCatchRate(player, item);
-                    }
-                }
-            }
-            if (item.isSimilar(catchTool)) {
-                if (item.getItemMeta().getDisplayName().equalsIgnoreCase(tool.getCatcher().getItemMeta().getDisplayName())) {
-                    if (event.getAction() == Action.RIGHT_CLICK_AIR) {
-                        method.capture.add(player);
-                    }
-                }
-            }
-            Plugin pluginGP = getServer().getPluginManager().getPlugin("GriefPrevention");
-            if (pluginGP != null) {
-                if (GriefPrevention.instance.config_claims_modificationTool != null) {
-                    if (item.getType() == GriefPrevention.instance.config_claims_modificationTool) {
-                        if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                            method.intersectsWithFarm(event.getClickedBlock().getLocation(), player);
+            if (event.getHand() == EquipmentSlot.HAND) {
+                if (item.isSimilar(resetTool)) {
+                    if (item.getItemMeta().getDisplayName().equalsIgnoreCase(resetTool.getItemMeta().getDisplayName())) {
+                        if (event.getAction() == Action.RIGHT_CLICK_AIR) {
+                            method.removeCatcherCooldown(player);
                         }
                     }
                 }
-            }
-            Plugin pluginWE = getServer().getPluginManager().getPlugin("WorldEdit");
-            if (pluginWE != null) {
-                WorldEditPlugin we = (WorldEditPlugin) pluginWE;
-                if (item.getType() == Material.WOOD_AXE) {
-                    if (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                        Selection selection = we.getSelection(player);
-                        if (selection != null) {
-                            Location minLoc = selection.getMinimumPoint();
-                            Location maxLoc = selection.getMaximumPoint();
-                            if (minLoc != null && maxLoc != null) {
-                                if (method.intersectsWithFarm(minLoc, maxLoc, player)) {
-                                    return;
+                if (item.isSimilar(increaseChanceItem)) {
+                    if (item.getItemMeta().getDisplayName().equalsIgnoreCase(increaseChanceItem.getItemMeta().getDisplayName())) {
+                        if (event.getAction() == Action.RIGHT_CLICK_AIR) {
+                            method.increaseCatchRate(player, item);
+                        }
+                    }
+                }
+                if (item.isSimilar(catchTool)) {
+                    if (item.getItemMeta().getDisplayName().equalsIgnoreCase(tool.getCatcher().getItemMeta().getDisplayName())) {
+                        if (event.getAction() == Action.RIGHT_CLICK_AIR) {
+                            method.capture.add(player);
+                        }
+                    }
+                }
+
+                Plugin pluginGP = getServer().getPluginManager().getPlugin("GriefPrevention");
+                if (pluginGP != null) {
+                    if (GriefPrevention.instance.config_claims_modificationTool != null) {
+                        if (item.getType() == GriefPrevention.instance.config_claims_modificationTool) {
+                            if (event.getHand() == EquipmentSlot.HAND) {
+                                if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                                    method.intersectsWithFarm(event.getClickedBlock().getLocation(), player);
                                 }
                             }
                         }
                     }
                 }
-            }
-            if (selTool != null && catchTool != null) {
-                if (item.isSimilar(selTool)) {
-                    if (item.hasItemMeta()) {
-                        if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
-                            if (player.hasPermission(FarmPermissions.COMMAND_START_FARM.toString()) || player.isOp()) {
-                                if (method.getCount(player) == 0) {
-                                    World world = event.getClickedBlock().getLocation().getWorld();
-                                    double x = event.getClickedBlock().getLocation().getBlockX();
-                                    double y = event.getClickedBlock().getLocation().getBlockY();
-                                    double z = event.getClickedBlock().getLocation().getBlockZ();
-                                    blockLocFirst.put(player, new Location(world, x, y, z));
-                                    blockVecFirst.put(player, new BlockVector(x, y, z));
-                                    player.sendMessage(ChatColor.BLUE + "Selected First Block @ " + "x:" + x + " y:" + y
-                                            + " z:" + z);
-                                    method.addCount(player, 1);
-                                    player.sendMessage(ChatColor.AQUA + "Left Click Another Block");
-                                } else if (method.getCount(player) == 1) {
-                                    World world = event.getClickedBlock().getLocation().getWorld();
-                                    double x = event.getClickedBlock().getLocation().getBlockX();
-                                    double y = event.getClickedBlock().getLocation().getBlockY();
-                                    double z = event.getClickedBlock().getLocation().getBlockZ();
-                                    blockLocSecond.put(player, new Location(world, x, y, z));
-                                    blockVecSecond.put(player, new BlockVector(x, y, z));
-                                    player.sendMessage(ChatColor.BLUE + "Selected Second Block @ " + "x:" + x + " y:" + y
-                                            + " z:" + z);
-                                    method.calculateFarmSize(player, blockVecFirst.get(player), blockVecSecond.get(player));
-                                    if (method.isValidFarmSize(player)) {
-                                        if (method.isValidFarmLocation(player, blockVecFirst.get(player)
-                                                , blockVecSecond.get(player))) {
-                                            method.subtractCount(player, 1);
-                                        }
+                Plugin pluginWE = getServer().getPluginManager().getPlugin("WorldEdit");
+                if (pluginWE != null) {
+                    WorldEditPlugin we = (WorldEditPlugin) pluginWE;
+                    if (item.getType() == Material.WOOD_AXE) {
+                        if (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                            Selection selection = we.getSelection(player);
+                            if (selection != null) {
+                                Location minLoc = selection.getMinimumPoint();
+                                Location maxLoc = selection.getMaximumPoint();
+                                if (minLoc != null && maxLoc != null) {
+                                    if (method.intersectsWithFarm(minLoc, maxLoc, player)) {
+                                        return;
                                     }
                                 }
-                            } else {
-                                player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have Permission To Use This Item");
+                            }
+                        }
+                    }
+                }
+                if (selTool != null && catchTool != null) {
+                    if (item.isSimilar(selTool)) {
+                        if (item.hasItemMeta()) {
+                            if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_START_FARM.toString()) || player.isOp()) {
+                                    if (method.getCount(player) == 0) {
+                                        World world = event.getClickedBlock().getLocation().getWorld();
+                                        double x = event.getClickedBlock().getLocation().getBlockX();
+                                        double y = event.getClickedBlock().getLocation().getBlockY();
+                                        double z = event.getClickedBlock().getLocation().getBlockZ();
+                                        blockLocFirst.put(player, new Location(world, x, y, z));
+                                        blockVecFirst.put(player, new BlockVector(x, y, z));
+                                        player.sendMessage(ChatColor.BLUE + "Selected First Block @ " + "x:" + x + " y:" + y
+                                                + " z:" + z);
+                                        method.addCount(player, 1);
+                                        player.sendMessage(ChatColor.AQUA + "Left Click Another Block");
+                                    } else if (method.getCount(player) == 1) {
+                                        World world = event.getClickedBlock().getLocation().getWorld();
+                                        double x = event.getClickedBlock().getLocation().getBlockX();
+                                        double y = event.getClickedBlock().getLocation().getBlockY();
+                                        double z = event.getClickedBlock().getLocation().getBlockZ();
+                                        blockLocSecond.put(player, new Location(world, x, y, z));
+                                        blockVecSecond.put(player, new BlockVector(x, y, z));
+                                        player.sendMessage(ChatColor.BLUE + "Selected Second Block @ " + "x:" + x + " y:" + y
+                                                + " z:" + z);
+                                        method.calculateFarmSize(player, blockVecFirst.get(player), blockVecSecond.get(player));
+                                        if (method.isValidFarmSize(player)) {
+                                            if (method.isValidFarmLocation(player, blockVecFirst.get(player)
+                                                    , blockVecSecond.get(player))) {
+                                                method.subtractCount(player, 1);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have Permission To Use This Item");
+                                }
                             }
                         }
                     }
@@ -396,9 +419,12 @@ public class FarmHandler implements Listener {
     @SuppressWarnings("unused")
     @EventHandler
     public void entityDeath(EntityDeathEvent event) {
-        Entity entity = event.getEntity();
-        if (method.isFarmAnimal(entity.getUniqueId())) {
-            method.removeFarmAnimal((Animals) entity);
+        LivingEntity entity = event.getEntity();
+        if (entity instanceof Animals) {
+            Animals animal = (Animals) entity;
+            if (method.isFarmAnimal(animal.getUniqueId())) {
+                method.removeFarmAnimal((Animals) entity);
+            }
         }
     }
 

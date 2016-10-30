@@ -180,6 +180,28 @@ public class FarmExecutor implements CommandExecutor {
                             } else if (args[1].equalsIgnoreCase("clear")) {
                                 method.clearMail(player);
                             }
+                        } else if (args[0].equalsIgnoreCase("home")) {
+                            if (args[1] != null && !args[1].equals(" ")) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_FARM_HOME_SELF.toString())) {
+                                    method.goToFarmHome(player, args[1]);
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_FARM_ANIMALS.toString());
+                                }
+                            } else {
+                                player.sendMessage(ChatColor.DARK_AQUA + "You Must Enter A Farm Name To Teleport To");
+                            }
+                        } else if (args[0].equalsIgnoreCase("check")) {
+                            if (args[1].equalsIgnoreCase("animals")) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_CHECK_ANIMALS.toString())) {
+                                    method.toggleAnimalInfo(player);
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_CHECK_ANIMALS.toString());
+                                }
+                            }else {
+                                player.sendMessage(ChatColor.DARK_AQUA + "Not A Valid Farm Plugin Command");
+                            }
                         } else {
                             player.sendMessage(ChatColor.DARK_AQUA + "Not A Valid Farm Plugin Command");
                         }
@@ -216,6 +238,22 @@ public class FarmExecutor implements CommandExecutor {
                                 } else {
                                     player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
                                 }
+                            }
+                        } else if (args[0].equalsIgnoreCase("home")) {
+                            if (args[1] != null && farms.getServer().getPlayer(args[1]) != null) {
+                                if (player.hasPermission(FarmPermissions.COMMAND_FARM_HOME_OTHER.toString())) {
+                                    if (args[2] != null && !args[2].equals(" ")) {
+                                        Player other = farms.getServer().getPlayer(args[1]);
+                                        method.goToFarmOther(player, other, args[2]);
+                                    } else {
+                                        player.sendMessage(ChatColor.DARK_AQUA + "You Must Enter A Farm Name To Teleport To");
+                                    }
+                                } else {
+                                    player.sendMessage(ChatColor.DARK_AQUA + "You Do Not Have The Permission "
+                                            + FarmPermissions.COMMAND_FARM_HOME_OTHER.toString());
+                                }
+                            } else {
+                                player.sendMessage(ChatColor.DARK_AQUA + "Player" + args[2] + " Not Found");
                             }
                         }
                     } else if(args.length == 4) {
