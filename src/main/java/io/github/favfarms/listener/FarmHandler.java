@@ -94,7 +94,17 @@ public class FarmHandler implements Listener {
                     }
                     for (Animals animal : method.toggleSprinkler.keySet()) {
                         if (method.isToggledSprinkler(animal)) {
-                            AbilityDisplay.getInstance().calculateLine(animal, player, Particle.DRAGON_BREATH);
+                            AbilityDisplay.getInstance().calculateLine(animal, player, Particle.WATER_SPLASH);
+                        }
+                    }
+                    for (Animals animal : method.toggleShield.keySet()) {
+                        if (method.isToggledShield(animal)) {
+                            AbilityDisplay.getInstance().calculateContinuousSphere(animal, Particle.WATER_BUBBLE, 5);
+                        }
+                    }
+                    for (Animals animal : method.toggleExplosive.keySet()) {
+                        if (method.isToggledExplosive(animal)) {
+                            AbilityDisplay.getInstance().calculateArc(animal, player, Particle.FLAME);
                         }
                     }
                 }
@@ -316,7 +326,7 @@ public class FarmHandler implements Listener {
                                     .getAnimalFromItem(clicked, world)))) {
                                 method.freezeAnimal(clicked, player);
                             }
-                            //Opens The Animals Modification Inventory
+                            //Opens The Animals Modification InventoryGSON
                             if (clicked.isSimilar(FItems.createModificationItem((Animals) method
                                     .getAnimalFromItem(clicked, world)))) {
                                 method.openModifyInv(player, clicked);
@@ -408,6 +418,12 @@ public class FarmHandler implements Listener {
                             } else if (clicked.isSimilar(AItems.createSprinklerDisplay((Animals) method
                                     .getAnimalFromItem(clicked, world)))) {
                                 method.setToggleSprinkler(player, (Animals) method.getAnimalFromItem(clicked, world));
+                            } else if (clicked.isSimilar(AItems.createShieldDisplay((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
+                                method.setToggleShield(player, (Animals) method.getAnimalFromItem(clicked, world));
+                            } else if (clicked.isSimilar(AItems.createExplosiveDisplay((Animals) method
+                                    .getAnimalFromItem(clicked, world)))) {
+                                method.setToggleExplosive(player, (Animals) method.getAnimalFromItem(clicked, world));
                             }
                         }
                     }

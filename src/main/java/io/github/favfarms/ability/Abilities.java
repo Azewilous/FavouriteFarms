@@ -6,7 +6,9 @@ package io.github.favfarms.ability;
 public enum Abilities {
 
     SNOW_BLOWER(0),
-    SPRINKLER(1);
+    SPRINKLER(1),
+    SHIELD(2),
+    EXPLOSIVE(3);
 
     private int id;
 

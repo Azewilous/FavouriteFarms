@@ -46,4 +46,26 @@ public class AbilityItems {
         return display;
     }
 
+    public ItemStack createShieldDisplay(Animals animal) {
+        ItemStack shield = new ItemStack(Material.ICE, 1);
+        ItemMeta shieldMeta = shield.getItemMeta();
+        shieldMeta.setDisplayName(ChatColor.DARK_GRAY + "Shield");
+        List<String> lore = new ArrayList<>();
+        lore.add(org.bukkit.ChatColor.DARK_GRAY + "UUID: " + animal.getUniqueId());
+        shieldMeta.setLore(lore);
+        shield.setItemMeta(shieldMeta);
+        return shield;
+    }
+
+    public ItemStack createExplosiveDisplay(Animals animal) {
+        ItemStack explosive = new ItemStack(Material.TNT, 1);
+        ItemMeta explosiveMeta = explosive.getItemMeta();
+        explosiveMeta.setDisplayName(ChatColor.DARK_GRAY + "Explosive");
+        List<String> lore = new ArrayList<>();
+        lore.add(org.bukkit.ChatColor.DARK_GRAY + "UUID: " + animal.getUniqueId());
+        explosiveMeta.setLore(lore);
+        explosive.setItemMeta(explosiveMeta);
+        return explosive;
+    }
+
 }

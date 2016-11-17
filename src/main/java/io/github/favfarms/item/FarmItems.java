@@ -277,7 +277,7 @@ public class FarmItems {
     public ItemStack createReturnItem(Animals animal) {
         ItemStack back = new ItemStack(Material.STAINED_CLAY, 1, (short)14);
         ItemMeta backMeta = back.getItemMeta();
-        backMeta.setDisplayName(ChatColor.RED + "Return To Farm Inventory");
+        backMeta.setDisplayName(ChatColor.RED + "Return To Farm InventoryGSON");
         List<String> lore = new ArrayList<>();
         lore.add(ChatColor.MAGIC + "UUID: " + animal.getUniqueId());
         backMeta.setLore(lore);

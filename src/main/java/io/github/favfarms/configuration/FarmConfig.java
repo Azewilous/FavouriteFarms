@@ -80,7 +80,7 @@ public class FarmConfig {
         }
     }
 
-    //Config
+    //FavConfig
     public FileConfiguration getFav() {
         if (fav == null) {
             reloadFav();

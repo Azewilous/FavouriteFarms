@@ -108,6 +108,8 @@ public class FarmMethods {
     //Toggle Abilities
     public HashMap<Animals, Boolean> toggleSnowBlower = new HashMap<>();
     public HashMap<Animals, Boolean> toggleSprinkler = new HashMap<>();
+    public HashMap<Animals, Boolean> toggleShield = new HashMap<>();
+    public HashMap<Animals, Boolean> toggleExplosive = new HashMap<>();
 
     //Toggle Follow
     Multimap<Player, Animals> following = ArrayListMultimap.create();
@@ -1777,20 +1779,57 @@ public class FarmMethods {
         if (toggleSprinkler.containsKey(animal)) {
             if (toggleSprinkler.get(animal)) {
                 toggleSprinkler.put(animal, false);
-                player.sendMessage(ChatColor.AQUA + "Toggled SnowBlower Off For " + animal.getName());
-
+                player.sendMessage(ChatColor.AQUA + "Toggled Sprinkler Off For " + animal.getName());
             } else {
                 toggleSprinkler.put(animal, true);
-                player.sendMessage(ChatColor.AQUA + "Toggled SnowBlower On For " + animal.getName());
+                player.sendMessage(ChatColor.AQUA + "Toggled Sprinkler On For " + animal.getName());
             }
         } else {
             toggleSprinkler.put(animal, true);
-            player.sendMessage(ChatColor.AQUA + "Toggled SnowBlower On For " + animal.getName());
+            player.sendMessage(ChatColor.AQUA + "Toggled Sprinkler On For " + animal.getName());
         }
     }
 
     public boolean isToggledSprinkler(Animals animal) {
         return toggleSprinkler.get(animal);
+    }
+
+    public void setToggleShield(Player player, Animals animal) {
+        if (toggleShield.containsKey(animal)) {
+            if (toggleShield.get(animal)) {
+                toggleShield.put(animal, false);
+                player.sendMessage(ChatColor.AQUA + "Toggled Shield Off For " + animal.getName());
+            } else {
+                toggleShield.put(animal, true);
+                player.sendMessage(ChatColor.AQUA + "Toggled Shield On For " + animal.getName());
+            }
+        } else {
+            toggleShield.put(animal, true);
+            player.sendMessage(ChatColor.AQUA + "Toggled Shield On For " + animal.getName());
+        }
+    }
+
+    public boolean isToggledShield(Animals animal) {
+        return toggleShield.get(animal);
+    }
+
+    public void setToggleExplosive(Player player, Animals animal) {
+        if (toggleExplosive.containsKey(animal)) {
+            if (toggleExplosive.get(animal)) {
+                toggleExplosive.put(animal, false);
+                player.sendMessage(ChatColor.AQUA + "Toggled Explosive Off For " + animal.getName());
+            } else {
+                toggleExplosive.put(animal, true);
+                player.sendMessage(ChatColor.AQUA + "Toggled Explosive On For " + animal.getName());
+            }
+        } else {
+            toggleExplosive.put(animal, true);
+            player.sendMessage(ChatColor.AQUA + "Toggled Explosive On For " + animal.getName());
+        }
+    }
+
+    public boolean isToggledExplosive(Animals animal) {
+        return toggleExplosive.get(animal);
     }
 
     public void setFollowing(Player player, Animals animal) {
@@ -2017,24 +2056,26 @@ public class FarmMethods {
                     for (UUID animalId : animalsMap.get(ownerId)) {
                         Animals animal = (Animals) getAnimalFromUUID(animalId, player.getWorld());
                         if (worldContainsAnimal(animal, player.getWorld())) {
-                            String home = animal.getMetadata("Home").get(0).asString();
-                            Integer exp = animal.getMetadata("Experience").get(0).asInt();
-                            Integer level = animal.getMetadata("Level").get(0).asInt();
-                            List<String> listAbility = new ArrayList<>();
-                            for (String ability : splitAbilitiesList(animal)) {
-                                listAbility.add(ability);
+                            if (animal.hasMetadata("Home")) {
+                                String home = animal.getMetadata("Home").get(0).asString();
+                                Integer exp = animal.getMetadata("Experience").get(0).asInt();
+                                Integer level = animal.getMetadata("Level").get(0).asInt();
+                                List<String> listAbility = new ArrayList<>();
+                                for (String ability : splitAbilitiesList(animal)) {
+                                    listAbility.add(ability);
+                                }
+                                config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                        .toString() + ".Name", animal.getName());
+                                config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                        .toString() + ".Home", home);
+                                config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                        .toString() + ".Experience", exp);
+                                config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                        .toString() + ".Level", level);
+                                config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
+                                        .toString() + ".Abilities", listAbility);
+                                config.saveAnimals();
                             }
-                            config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
-                                    .toString() + ".Name", animal.getName());
-                            config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
-                                    .toString() + ".Home", home);
-                            config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
-                                    .toString() + ".Experience", exp);
-                            config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
-                                    .toString() + ".Level", level);
-                            config.getAnimals().set("Animals." + ownerId.toString() + "." + home + "." + animal.getUniqueId()
-                                    .toString() + ".Abilities", listAbility);
-                            config.saveAnimals();
                         } else {
                             removeFarmAnimal(animal);
                         }
@@ -2397,9 +2438,13 @@ public class FarmMethods {
             if (animal instanceof PolarBear) {
                 Abilities snwblr = Abilities.SNOW_BLOWER;
                 Abilities spklr = Abilities.SPRINKLER;
+                Abilities shld = Abilities.SHIELD;
+                Abilities xplsv = Abilities.EXPLOSIVE;
                 if (animalLevel >= 32) {
                     abilities.add(snwblr);
                     abilities.add(spklr);
+                    abilities.add(shld);
+                    abilities.add(xplsv);
                     animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), abilities));
                 } else {
                     animal.setMetadata("Abilities", new FixedMetadataValue(FavFarms.getInstance(), spklr));
@@ -2557,5 +2602,4 @@ public class FarmMethods {
         }
         return true;
     }
-
 }

@@ -47,7 +47,7 @@ public class FarmInventory {
     @SuppressWarnings("deprecation")
     public Inventory createAnimalInventory(Player player, Animals animal) {
         if (animal != null) {
-            Inventory animalInv = Bukkit.createInventory(player, 18, ChatColor.GRAY + animal.getName() + "'s Inventory");
+            Inventory animalInv = Bukkit.createInventory(player, 18, ChatColor.GRAY + animal.getName() + "'s InventoryGSON");
             animalInv.setItem(0, FarmItems.getInstance().createTeleportHereItem(animal));
             animalInv.setItem(2, FarmItems.getInstance().createHomeItem(animal));
             animalInv.setItem(3, FarmItems.getInstance().createModificationItem(animal));
@@ -149,6 +149,14 @@ public class FarmInventory {
                 }
                 if (skill.equalsIgnoreCase(Abilities.SNOW_BLOWER.toString())) {
                     abilityInv.setItem(counter, AbilityItems.getInstance().createSnowBlowerDisplay(animal));
+                    counter = counter + 3;
+                }
+                if (skill.equalsIgnoreCase(Abilities.SHIELD.toString())) {
+                    abilityInv.setItem(counter, AbilityItems.getInstance().createShieldDisplay(animal));
+                    counter = counter + 3;
+                }
+                if (skill.equalsIgnoreCase(Abilities.EXPLOSIVE.toString())) {
+                    abilityInv.setItem(counter, AbilityItems.getInstance().createExplosiveDisplay(animal));
                     counter = counter + 3;
                 }
             }

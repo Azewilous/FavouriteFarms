@@ -51,7 +51,7 @@ permissions:
   favfarms.set.spawn:
     description: Access To Set Farm Spawn
   favfarms.inv.self:
-    description: Open Farm Inventory For Self
+    description: Open Farm InventoryGSON For Self
   favfarms.inv.other:
     description: Open Farm Invneotry Of Others
   favfarms.farm.animals:
