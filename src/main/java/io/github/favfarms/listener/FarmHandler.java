@@ -2,7 +2,6 @@ package io.github.favfarms.listener;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.Selection;
-import io.github.favfarms.FavFarms;
 import io.github.favfarms.ability.AbilityDisplay;
 import io.github.favfarms.ability.AbilityItems;
 import io.github.favfarms.configuration.FarmConfig;
@@ -41,22 +40,16 @@ import static org.bukkit.Bukkit.getServer;
  */
 public class FarmHandler implements Listener {
 
-    FavFarms farms;
+    private FarmMethods method = FarmMethods.getInstance();
+    private SelectionTool tool = SelectionTool.getInstance();
+    private FarmItems FItems = FarmItems.getInstance();
+    private FarmConfig config = FarmConfig.getInstance();
+    private AbilityItems AItems = AbilityItems.getInstance();
 
-    public FarmHandler(FavFarms farms) {
-        this.farms = farms;
-    }
-
-    FarmMethods method = FarmMethods.getInstance();
-    SelectionTool tool = SelectionTool.getInstance();
-    FarmItems FItems = FarmItems.getInstance();
-    FarmConfig config = FarmConfig.getInstance();
-    AbilityItems AItems = AbilityItems.getInstance();
-
-    HashMap<Player, Location> blockLocFirst = new HashMap<>();
-    HashMap<Player, Location> blockLocSecond = new HashMap<>();
-    HashMap<Player, BlockVector> blockVecFirst = new HashMap<>();
-    HashMap<Player, BlockVector> blockVecSecond = new HashMap<>();
+    //private HashMap<Player, Location> blockLocFirst = new HashMap<>();
+    //private HashMap<Player, Location> blockLocSecond = new HashMap<>();
+    private HashMap<Player, BlockVector> blockVecFirst = new HashMap<>();
+    private HashMap<Player, BlockVector> blockVecSecond = new HashMap<>();
 
 
     @SuppressWarnings("unused")
@@ -174,7 +167,7 @@ public class FarmHandler implements Listener {
                                         double x = event.getClickedBlock().getLocation().getBlockX();
                                         double y = event.getClickedBlock().getLocation().getBlockY();
                                         double z = event.getClickedBlock().getLocation().getBlockZ();
-                                        blockLocFirst.put(player, new Location(world, x, y, z));
+                                        //blockLocFirst.put(player, new Location(world, x, y, z));
                                         blockVecFirst.put(player, new BlockVector(x, y, z));
                                         player.sendMessage(ChatColor.BLUE + "Selected First Block @ " + "x:" + x + " y:" + y
                                                 + " z:" + z);
@@ -185,7 +178,7 @@ public class FarmHandler implements Listener {
                                         double x = event.getClickedBlock().getLocation().getBlockX();
                                         double y = event.getClickedBlock().getLocation().getBlockY();
                                         double z = event.getClickedBlock().getLocation().getBlockZ();
-                                        blockLocSecond.put(player, new Location(world, x, y, z));
+                                        //blockLocSecond.put(player, new Location(world, x, y, z));
                                         blockVecSecond.put(player, new BlockVector(x, y, z));
                                         player.sendMessage(ChatColor.BLUE + "Selected Second Block @ " + "x:" + x + " y:" + y
                                                 + " z:" + z);

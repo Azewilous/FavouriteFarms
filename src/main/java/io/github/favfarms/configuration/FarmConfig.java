@@ -16,29 +16,29 @@ public class FarmConfig {
 
     private FarmConfig () {}
 
-    static FarmConfig instance = new FarmConfig();
+    private static FarmConfig instance = new FarmConfig();
 
     public static FarmConfig getInstance () {
         return instance;
     }
 
-    public static FileConfiguration fav = null;
-    public static File favFile = null;
+    private static FileConfiguration fav = null;
+    private static File favFile = null;
 
-    public static FileConfiguration farms = null;
-    public static File farmsFile = null;
+    private static FileConfiguration farms = null;
+    private static File farmsFile = null;
 
-    public static FileConfiguration animals = null;
-    public static File animalsFile = null;
+    private static FileConfiguration animals = null;
+    private static File animalsFile = null;
 
-    public static FileConfiguration playerData = null;
-    public static File playerDataFile = null;
+    private static FileConfiguration playerData = null;
+    private static File playerDataFile = null;
 
-    public static FileConfiguration savTimers = null;
-    public static File savTimersFile = null;
+    private static FileConfiguration savTimers = null;
+    private static File savTimersFile = null;
 
-    public static FileConfiguration farmMail = null;
-    public static File farmMailFile = null;
+    private static FileConfiguration farmMail = null;
+    private static File farmMailFile = null;
 
     //Farms
     public FileConfiguration getFarms() {
@@ -88,6 +88,7 @@ public class FarmConfig {
         return fav;
     }
 
+    @SuppressWarnings("unused")
     public void saveFav() {
         if (fav != null && favFile != null) {
             try {
@@ -171,7 +172,7 @@ public class FarmConfig {
         }
     }
 
-    public void reloadPlayerData() {
+    private void reloadPlayerData() {
         if (playerDataFile == null) {
             playerDataFile = new File(FavFarms.getInstance().getDataFolder(), "playerdata.yml");
         }
@@ -206,7 +207,7 @@ public class FarmConfig {
         }
     }
 
-    public void reloadSavTimers() {
+    private void reloadSavTimers() {
         if (savTimersFile == null) {
             savTimersFile = new File(FavFarms.getInstance().getDataFolder(), "sav.yml");
         }
@@ -241,7 +242,7 @@ public class FarmConfig {
         }
     }
 
-    public void reloadFarmMail() {
+    private void reloadFarmMail() {
         if (farmMailFile == null) {
             farmMailFile = new File(FavFarms.getInstance().getDataFolder(), "mail.yml");
         }

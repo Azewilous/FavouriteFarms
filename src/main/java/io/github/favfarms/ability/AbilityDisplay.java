@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public class AbilityDisplay {
 
-    Plugin farms = FavFarms.getInstance();
+    private Plugin farms = FavFarms.getInstance();
 
     private static AbilityDisplay instance = new AbilityDisplay();
 
@@ -25,9 +25,9 @@ public class AbilityDisplay {
         return instance;
     }
 
-    Map<Animals, Long> repeat = new HashMap<>();
-    Map<Animals, Integer> taskId_01 = new HashMap<>();
-    Map<Animals, Integer> taskId_02 = new HashMap<>();
+    private Map<Animals, Long> repeat = new HashMap<>();
+    private Map<Animals, Integer> taskId_01 = new HashMap<>();
+    private Map<Animals, Integer> taskId_02 = new HashMap<>();
 
     public void calculateLine(Animals animal, Player player, Particle particle) {
         World world = animal.getWorld();
@@ -69,7 +69,7 @@ public class AbilityDisplay {
     }
 
 
-    public void calculateSphere(Animals animal, Particle particle) {
+    private void calculateSphere(Animals animal, Particle particle) {
         World world = animal.getWorld();
 
         Location location = animal.getLocation().add(0, 1, 0);
@@ -99,7 +99,7 @@ public class AbilityDisplay {
         }, 0,(long) 0.8));
     }
 
-    public void countDown(Animals animal, long time) {
+    private void countDown(Animals animal, long time) {
         repeat.put(animal, time);
         if (repeat.containsKey(animal)) {
             BukkitScheduler scheduler = Bukkit.getServer().getScheduler();

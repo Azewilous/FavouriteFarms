@@ -21,19 +21,10 @@ public class FarmData {
 
     private FarmConfig config = FarmConfig.getInstance();
 
-    String XS = "Extra Small";
-    String S = "Small";
-    String M = "Medium";
-    String L = "Large";
-    String XL = "Extra Large";
-
-    String name;
-    int ID;
-    int blocks;
-    UUID ownerUUID;
-    Location locFirst;
-    Vector vecFirst;
-    Vector vecSecond;
+    private String name;
+    private int ID;
+    private int blocks;
+    private UUID ownerUUID;
 
     public void createFarm(String name, UUID uuid, int ID, int blocks) {
         this.name = name;
@@ -51,49 +42,50 @@ public class FarmData {
     }
 
     public void createArea(Vector vec1, Vector vec2, Location loc1) {
-        locFirst = loc1;
-        vecFirst = vec1;
-        vecSecond = vec2;
-
         if (config.getFarms().get("Farms." + getName()) != null) {
-            if (locFirst != null && vecFirst != null && vecSecond != null) {
-                config.getFarms().set("Farms." + getName() + ".World", locFirst.getWorld().getName());
-                config.getFarms().set("Farms." + getName() + ".Min.X", vecFirst.getBlockX());
-                config.getFarms().set("Farms." + getName() + ".Min.Y", vecFirst.getBlockY());
-                config.getFarms().set("Farms." + getName() + ".Min.Z", vecFirst.getBlockZ());
-                config.getFarms().set("Farms." + getName() + ".Max.X", vecSecond.getBlockX());
-                config.getFarms().set("Farms." + getName() + ".Max.Y", vecSecond.getBlockY());
-                config.getFarms().set("Farms." + getName() + ".Max.Z", vecSecond.getBlockZ());
+            if (loc1 != null && vec1 != null && vec2 != null) {
+                config.getFarms().set("Farms." + getName() + ".World", loc1.getWorld().getName());
+                config.getFarms().set("Farms." + getName() + ".Min.X", vec1.getBlockX());
+                config.getFarms().set("Farms." + getName() + ".Min.Y", vec1.getBlockY());
+                config.getFarms().set("Farms." + getName() + ".Min.Z", vec1.getBlockZ());
+                config.getFarms().set("Farms." + getName() + ".Max.X", vec2.getBlockX());
+                config.getFarms().set("Farms." + getName() + ".Max.Y", vec2.getBlockY());
+                config.getFarms().set("Farms." + getName() + ".Max.Z", vec2.getBlockZ());
                 config.saveFarms();
             }
         }
     }
 
-    public int getID() {
+    private int getID() {
         return ID;
     }
 
-    public String getName() {
+    private String getName() {
         return name;
     }
 
-    public UUID getOwnerUUID() {
+    private UUID getOwnerUUID() {
         return ownerUUID;
     }
 
-    public String getFarmSize() {
+    private String getFarmSize() {
         String size;
         int amount = blocks;
 
         if (amount <= 300) {
+            String XS = "Extra Small";
             size = XS + ", " + amount + " blocks";
         } else if (amount <= 700) {
-            size = S + ", " + amount + " blocks";
+            String s = "Small";
+            size = s + ", " + amount + " blocks";
         } else if (amount <= 1800) {
-            size = M + ", " + amount + " blocks";
+            String m = "Medium";
+            size = m + ", " + amount + " blocks";
         } else if (amount <= 2500) {
-            size = L + ", " + amount + " blocks";
+            String l = "Large";
+            size = l + ", " + amount + " blocks";
         } else if (amount <= 5000) {
+            String XL = "Extra Large";
             size = XL + ", " + amount + " blocks";
         } else
             size = "Empty";

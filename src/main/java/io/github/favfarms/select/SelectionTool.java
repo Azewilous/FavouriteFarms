@@ -20,9 +20,9 @@ public class SelectionTool {
         return instance;
     }
 
-    FarmConfig config = FarmConfig.getInstance();
+    private FarmConfig config = FarmConfig.getInstance();
 
-    public ItemStack createTool() {
+    private ItemStack createTool() {
         FileConfiguration favCfg = config.getFav();
         String itemName = favCfg.getString("Selector.Material").toUpperCase();
         String itemDisplay = favCfg.getString("Selector.DisplayName");
@@ -33,7 +33,7 @@ public class SelectionTool {
         return selTool;
     }
 
-    public ItemStack createCatcher() {
+    private ItemStack createCatcher() {
         FileConfiguration favCfg = config.getFav();
         String itemName = favCfg.getString("Catcher.Material").toUpperCase();
         String itemDisplay = favCfg.getString("Catcher.DisplayName");

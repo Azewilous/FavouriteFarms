@@ -17,7 +17,7 @@ public class FarmText {
         return instance;
     }
 
-    Plugin farms = FavFarms.getInstance();
+    private Plugin farms = FavFarms.getInstance();
 
     public String getInfo() {
         String about = "?8---------------------Favourite Farms--------------\n"

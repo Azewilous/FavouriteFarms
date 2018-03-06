@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 
 public class ReflectionUtil {
 
+    @SuppressWarnings("unused")
     public static Object getClass(String name, Object... args) throws Exception {
         Class<?> c = Class.forName(ReflectionUtil.getPackageName() + "." + name);
         int params = 0;
@@ -31,13 +32,14 @@ public class ReflectionUtil {
         return null;
     }
 
+    @SuppressWarnings("unused")
     public static void setValue(Object instance, String fieldName, Object value) throws Exception {
         Field field = instance.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(instance, value);
     }
 
-    public static String getPackageName() {
+    private static String getPackageName() {
         return "net.minecraft.server." + Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
     }
 }

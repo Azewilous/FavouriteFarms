@@ -28,7 +28,7 @@ public class FarmItems {
         return instance;
     }
 
-    FarmConfig config = FarmConfig.getInstance();
+    private FarmConfig config = FarmConfig.getInstance();
 
     public ItemStack createEgg(Animals animal) {
         ItemStack egg = new ItemStack(Material.MONSTER_EGG, 1);

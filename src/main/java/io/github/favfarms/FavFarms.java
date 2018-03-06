@@ -26,22 +26,22 @@ public class FavFarms extends JavaPlugin {
 
     public static Plugin instance = null;
 
-    public ConsoleCommandSender console = Bukkit.getConsoleSender();
+    private ConsoleCommandSender console = Bukkit.getConsoleSender();
 
-    FarmMethods method;
-    FarmConfig fConfig;
-    FarmText text;
-    FarmNavigation nav;
-    FarmItems items;
-    FarmData data;
-    SelectionTool tool;
+    private FarmMethods method;
+    private FarmConfig fConfig;
+    private FarmText text;
+    private FarmNavigation nav;
+    private FarmItems items;
+    private FarmData data;
+    private SelectionTool tool;
 
     @Override
 	public void onEnable() {
 
         FavFarms.instance = getInstance();
         getCommand("farm").setExecutor(new FarmExecutor(this));
-        getServer().getPluginManager().registerEvents(new FarmHandler(this), instance);
+        getServer().getPluginManager().registerEvents(new FarmHandler(), instance);
 
         console.sendMessage(ChatColor.LIGHT_PURPLE + "[Favourite Farms] Initiating - Check Config");
 
@@ -80,7 +80,7 @@ public class FavFarms extends JavaPlugin {
         return instance;
      }
 
-    public void safeSaveFiles() {
+    private void safeSaveFiles() {
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
             method.saveAnimals(player);
             method.saveFarmLevel(player);
@@ -89,7 +89,7 @@ public class FavFarms extends JavaPlugin {
         method.saveSavTimers();
     }
 
-    public void safeLoadFile() {
+    private void safeLoadFile() {
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
             method.loadAnimals(player);
             method.loadFarmLevel(player);
@@ -98,7 +98,7 @@ public class FavFarms extends JavaPlugin {
         method.loadSavTimers();
     }
 
-    public void setupConfigs() {
+    private void setupConfigs() {
         fConfig.saveDefaultFav();
         fConfig.saveDefaultFarms();
         fConfig.saveDefaultAnimals();

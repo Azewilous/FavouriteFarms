@@ -3,6 +3,7 @@ package io.github.favfarms.permission;
 /**
  * FavouriteFarms Created by Awesome Red on 9/21/2016.
  */
+@SuppressWarnings("unused")
 public enum FarmPermissions {
 
     COMMAND_FARM("favfarms.farm"),

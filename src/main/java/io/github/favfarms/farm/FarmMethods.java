@@ -41,7 +41,7 @@ import static org.bukkit.Bukkit.getServer;
  */
 public class FarmMethods {
 
-    public FarmMethods() {}
+    private FarmMethods() {}
 
     public static FarmMethods instance = new FarmMethods();
 
